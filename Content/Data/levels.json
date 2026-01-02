@@ -1,0 +1,765 @@
+﻿{
+  "Levels": [
+    {
+      "LevelId": 1,
+      "Name": "World 1-1: Khoi Dau",
+      "TimeLimit": 400,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "Entities": [
+        {
+          "Type": "Coin",
+          "X": 320,
+          "Y": 300
+        },
+        {
+          "Type": "Coin",
+          "X": 400,
+          "Y": 300
+        },
+        {
+          "Type": "Coin",
+          "X": 480,
+          "Y": 300
+        },
+        {
+          "Type": "Mushroom",
+          "X": 300,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 2,
+      "Name": "World 1-2: Vat The",
+      "TimeLimit": 350,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 180,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Coin",
+          "X": 250,
+          "Y": 250
+        },
+        {
+          "Type": "Coin",
+          "X": 350,
+          "Y": 250
+        },
+        {
+          "Type": "Coin",
+          "X": 450,
+          "Y": 250
+        },
+        {
+          "Type": "Mushroom",
+          "X": 600,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 3,
+      "Name": "World 1-3: Goomba",
+      "TimeLimit": 300,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 400,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 600,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 800,
+          "Y": 350
+        },
+        {
+          "Type": "Coin",
+          "X": 500,
+          "Y": 250
+        },
+        {
+          "Type": "Mushroom",
+          "X": 700,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 4,
+      "Name": "World 1-4: Koopa",
+      "TimeLimit": 320,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 400,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 700,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 1000,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 1300,
+          "Y": 350
+        },
+        {
+          "Type": "Coin",
+          "X": 600,
+          "Y": 250
+        },
+        {
+          "Type": "FireFlower",
+          "X": 900,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 5,
+      "Name": "World 1-5: Nam Lon",
+      "TimeLimit": 300,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 500,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 800,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 1100,
+          "Y": 350
+        },
+        {
+          "Type": "Mushroom",
+          "X": 400,
+          "Y": 200
+        },
+        {
+          "Type": "Coin",
+          "X": 700,
+          "Y": 250
+        },
+        {
+          "Type": "Coin",
+          "X": 1000,
+          "Y": 250
+        }
+      ]
+    },
+    {
+      "LevelId": 6,
+      "Name": "World 1-6: Plant",
+      "TimeLimit": 350,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "PiranhaPlant",
+          "X": 960,
+          "Y": 352
+        },
+        {
+          "Type": "PiranhaPlant",
+          "X": 1280,
+          "Y": 352
+        },
+        {
+          "Type": "Goomba",
+          "X": 600,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 1000,
+          "Y": 350
+        },
+        {
+          "Type": "FireFlower",
+          "X": 800,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 7,
+      "Name": "World 1-7: Ban Dan",
+      "TimeLimit": 280,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 500,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 800,
+          "Y": 350
+        },
+        {
+          "Type": "PiranhaPlant",
+          "X": 1120,
+          "Y": 352
+        },
+        {
+          "Type": "Goomba",
+          "X": 1400,
+          "Y": 350
+        },
+        {
+          "Type": "FireFlower",
+          "X": 600,
+          "Y": 200
+        },
+        {
+          "Type": "Coin",
+          "X": 900,
+          "Y": 250
+        }
+      ]
+    },
+    {
+      "LevelId": 8,
+      "Name": "World 1-8: Ten Lua",
+      "TimeLimit": 300,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "FollowPlayer",
+      "MapData": {
+        "Width": 200,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 400,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 700,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 1000,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 1300,
+          "Y": 350
+        },
+        {
+          "Type": "PiranhaPlant",
+          "X": 1600,
+          "Y": 352
+        },
+        {
+          "Type": "FireFlower",
+          "X": 850,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 9,
+      "Name": "World 1-9: Auto Scroll",
+      "TimeLimit": 250,
+      "Background": "bg_overworld.png",
+      "Music": "theme_main.mp3",
+      "CameraMode": "AutoScroll",
+      "MapData": {
+        "Width": 150,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Goomba",
+          "X": 300,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 600,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 900,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 1200,
+          "Y": 350
+        },
+        {
+          "Type": "1Up",
+          "X": 800,
+          "Y": 200
+        },
+        {
+          "Type": "FireFlower",
+          "X": 400,
+          "Y": 200
+        }
+      ]
+    },
+    {
+      "LevelId": 10,
+      "Name": "World 1-10: Boss",
+      "TimeLimit": 500,
+      "Background": "bg_castle.png",
+      "Music": "theme_boss.mp3",
+      "CameraMode": "Fixed",
+      "MapData": {
+        "Width": 80,
+        "Height": 15,
+        "TileMatrix": []
+      },
+      "Entities": [
+        {
+          "Type": "Koopa",
+          "X": 400,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 700,
+          "Y": 350
+        },
+        {
+          "Type": "Koopa",
+          "X": 1000,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 550,
+          "Y": 350
+        },
+        {
+          "Type": "Goomba",
+          "X": 850,
+          "Y": 350
+        },
+        {
+          "Type": "FireFlower",
+          "X": 480,
+          "Y": 288
+        },
+        {
+          "Type": "FireFlower",
+          "X": 960,
+          "Y": 288
+        }
+      ]
+    }
+  ],
+  "PlayerData": {
+    "PlayerName": "MinhKhanh",
+    "LastPlayed": "2025-01-02T14:30:00"
+  },
+  "Settings": {
+    "IsMusicOn": true,
+    "IsSfxOn": true,
+    "MasterVolume": 0.8,
+    "KeyBindings": {
+      "P1": {
+        "MoveLeft": "A",
+        "MoveRight": "D",
+        "Jump": "W",
+        "Shoot": "J"
+      },
+      "P2": {
+        "MoveLeft": "Left",
+        "MoveRight": "Right",
+        "Jump": "Up",
+        "Shoot": "RightControl"
+      }
+    }
+  },
+  "CurrentState": {
+    "Description": "Dữ liệu dùng để bấm nút Continue",
+    "CurrentLevelId": 1,
+    "LivesLeft": 3,
+    "TotalScore": 0,
+    "CoinsCollected": 0,
+    "PowerUpState": "Small",
+    "CheckpointPosition": {
+      "X": 0,
+      "Y": 0
+    }
+  },
+  "LevelHistory": []
