@@ -10,6 +10,7 @@ namespace MarioGame.Core
     {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         StartScreen,
         Playing,
         Paused,
@@ -51,6 +52,9 @@ namespace MarioGame.Core
 =======
 >>>>>>> parent of 03770b5 (utf8)
     }
+=======
+    }
+>>>>>>> parent of 03770b5 (utf8)
 =======
     }
 >>>>>>> parent of 03770b5 (utf8)
