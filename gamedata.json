@@ -1,0 +1,35 @@
+{
+  "PlayerName": "Player",
+  "LastPlayed": "2026-01-02T23:17:39.7338914+07:00",
+  "Settings": {
+    "IsMusicOn": true,
+    "IsSfxOn": true,
+    "MasterVolume": 0.8,
+    "KeyBindings": {
+      "P1": {
+        "MoveLeft": "Keys.A",
+        "MoveRight": "Keys.D",
+        "Jump": "Keys.W",
+        "Shoot": "Keys.J"
+      },
+      "P2": {
+        "MoveLeft": "Keys.A",
+        "MoveRight": "Keys.D",
+        "Jump": "Keys.W",
+        "Shoot": "Keys.J"
+      }
+    }
+  },
+  "CurrentState": {
+    "CurrentLevelId": 1,
+    "LivesLeft": 3,
+    "TotalScore": 0,
+    "CoinsCollected": 0,
+    "PowerUpState": "Small",
+    "CheckpointPosition": {
+      "X": 0,
+      "Y": 0
+    }
+  },
+  "LevelHistory": []
+}

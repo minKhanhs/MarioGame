@@ -14,7 +14,8 @@ namespace MarioGame.Entities.Items
 
         public override void OnCollect(Player.Player player)
         {
-            GameManager.Instance.AddCoin();
+            // Use event to notify game systems instead of direct GameManager call
+            GameEvents.CoinCollected?.Invoke(player);
             SoundManager.Instance.PlaySound("coin");
         }
 

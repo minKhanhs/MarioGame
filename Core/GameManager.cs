@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MarioGame.Managers;
 using MarioGame.Level;
 using MarioGame.UI;
+using System;
 
 namespace MarioGame.Core
 {
@@ -35,6 +36,15 @@ namespace MarioGame.Core
             _graphics.PreferredBackBufferWidth = Constants.SCREEN_WIDTH;
             _graphics.PreferredBackBufferHeight = Constants.SCREEN_HEIGHT;
             _graphics.ApplyChanges();
+
+            // Subscribe to events
+            GameEvents.CoinCollected += OnCoinCollected;
+        }
+
+        private void OnCoinCollected(Entities.Player.Player player)
+        {
+            // Basic handling for coin collection
+            AddCoin();
         }
 
         protected override void Initialize()

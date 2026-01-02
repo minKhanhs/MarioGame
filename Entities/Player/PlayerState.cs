@@ -1,4 +1,6 @@
-﻿namespace MarioGame.Entities.Player
+﻿using MarioGame.Core;
+
+namespace MarioGame.Entities.Player
 {
     public interface IPlayerState
     {
@@ -98,7 +100,8 @@
             _deathTimer -= deltaTime;
             if (_deathTimer <= 0)
             {
-                MarioGame.Core.GameManager.Instance.PlayerDied();
+                // Notify game systems that player death sequence completed
+                GameEvents.PlayerDied?.Invoke();
             }
         }
 

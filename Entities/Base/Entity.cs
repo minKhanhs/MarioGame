@@ -8,7 +8,7 @@ namespace MarioGame.Entities.Base
         public Vector2 Velocity { get; set; }
         public bool IsGrounded { get; set; }
         public bool IsSolid { get; protected set; } = true;
-        public bool AffectedByGravity { get; protected set; } = true;
+        public bool AffectedByGravity { get; set; } = true;
 
         protected bool _facingRight = true;
         protected float _gravity = 980f;

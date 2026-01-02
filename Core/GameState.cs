@@ -1,7 +1,15 @@
-﻿namespace MarioGame.Core
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MarioGame.Core
 {
-    public enum GameState
+    internal class GameState
     {
+<<<<<<< HEAD
+<<<<<<< HEAD
         StartScreen,
         Playing,
         Paused,
@@ -40,5 +48,10 @@
         FollowPlayer,
         AutoScroll,
         Fixed
+=======
+>>>>>>> parent of 03770b5 (utf8)
     }
+=======
+    }
+>>>>>>> parent of 03770b5 (utf8)
 }
