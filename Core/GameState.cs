@@ -8,12 +8,5 @@ namespace MarioGame.Core
 {
     internal class GameState
     {
-        StartMenu,
-        LevelSelect,
-        Playing,
-        Paused,
-        GameOver,
-        Victory,
-        Settings
     }
 }
