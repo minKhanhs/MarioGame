@@ -1,6 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using MarioGame._Scenes;
+using MarioGame.src._Core;
+using MarioGame.src._Scenes;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
+
 
 namespace MarioGame
 {
@@ -14,12 +17,12 @@ namespace MarioGame
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+            _graphics.PreferredBackBufferWidth = 1280;
+            _graphics.PreferredBackBufferHeight = 720;
         }
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
             base.Initialize();
         }
 
@@ -27,16 +30,22 @@ namespace MarioGame
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
+            // Cấu hình GameManager
+            GameManager.Instance.Content = Content;
+            GameManager.Instance.GraphicsDevice = GraphicsDevice;
+            SoundManager.Instance.LoadSong("TitleTheme", "audio/titleMusic");
+
+            // Khởi động vào Menu hoặc vào thẳng Level 1
+            // GameManager.Instance.ChangeScene(new MenuScene()); 
+
+            // Test vào thẳng Level 2 luôn
+            GameManager.Instance.ChangeScene(new MenuScene());
         }
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-
-            // TODO: Add your update logic here
-
+            // GameManager lo update scene hiện tại
+            GameManager.Instance.Update(gameTime);
             base.Update(gameTime);
         }
 
@@ -44,7 +53,8 @@ namespace MarioGame
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            // GameManager lo draw scene hiện tại
+            GameManager.Instance.Draw(_spriteBatch);
 
             base.Draw(gameTime);
         }

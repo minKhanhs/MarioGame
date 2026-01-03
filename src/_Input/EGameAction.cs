@@ -6,7 +6,13 @@ using System.Threading.Tasks;
 
 namespace MarioGame.src._Input
 {
-    internal class EGameAction
+    public enum EGameAction
     {
+        MoveLeft,
+        MoveRight,
+        Jump,
+        Run,
+        Attack,
+        Pause
     }
 }
