@@ -30,16 +30,36 @@ namespace MarioGame.src._Data
             List<GameObj> gameObjects = new List<GameObj>();
 
             if (!File.Exists(filePath))
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Map file not found: {filePath}");
                 throw new FileNotFoundException($"Map file not found: {filePath}");
+            }
 
             string jsonContent = File.ReadAllText(filePath);
+            
+            if (string.IsNullOrWhiteSpace(jsonContent))
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Map file is empty: {filePath}");
+                throw new InvalidOperationException($"Map file is empty: {filePath}");
+            }
+
             var mapData = JsonSerializer.Deserialize<LevelMapData>(jsonContent);
+
+            // Check if deserialization failed
+            if (mapData == null || mapData.Layout == null || mapData.Layout.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ERROR] Invalid map data format: {filePath}");
+                throw new InvalidOperationException($"Invalid map data format or empty layout: {filePath}");
+            }
 
             int tileSize = mapData.TileSize;
             int y = 0;
 
             foreach (var row in mapData.Layout)
             {
+                if (row == null || row.Length == 0)
+                    continue;
+
                 for (int x = 0; x < row.Length; x++)
                 {
                     char code = row[x];
@@ -56,6 +76,7 @@ namespace MarioGame.src._Data
                 y++;
             }
 
+            System.Diagnostics.Debug.WriteLine($"[SUCCESS] Loaded level with {gameObjects.Count} objects from {filePath}");
             return gameObjects;
         }
 
@@ -78,10 +99,6 @@ namespace MarioGame.src._Data
                     return EnemyFactory.CreateEnemy(code, pos, _textureMap);
                 case 'Z': // Castle
                     return new Castle(_textureMap["castle"], pos);
-
-                // Player (thường Player được Game1 quản lý riêng, 
-                // nhưng map có thể đánh dấu vị trí xuất phát)
-                // case 'P': return new SpawnPoint(pos); 
 
                 default: return null; // Khoảng trắng hoặc ký tự lạ
             }

@@ -1,4 +1,4 @@
-﻿using MarioGame.src._Core;
+using MarioGame.src._Core;
 using MarioGame.src._Scenes;
 using MarioGame.src._UI;
 using MarioGame._Scenes;
@@ -9,22 +9,26 @@ using System.Collections.Generic;
 
 namespace MarioGame.src._Scenes
 {
-    public class GameOverScene : IScene
+    public class LevelCompleteScene : IScene
     {
         private SpriteFont _font;
         private List<Button> _buttons;
-        private int _levelIndex;
+        private int _currentLevel;
+        private int _totalLevels;
+        private int _bonusScore;
         private int _finalScore;
         private int _finalCoins;
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
 
-        public GameOverScene(int levelIndex, int score, int coins)
+        public LevelCompleteScene(int currentLevel, int totalLevels, int score, int coins, int bonusScore = 500)
         {
-            _levelIndex = levelIndex;
-            _finalScore = score;
+            _currentLevel = currentLevel;
+            _totalLevels = totalLevels;
+            _finalScore = score + bonusScore;
             _finalCoins = coins;
+            _bonusScore = bonusScore;
         }
 
         public void LoadContent()
@@ -57,14 +61,25 @@ namespace MarioGame.src._Scenes
 
             int centerX = 640;
             int startX = centerX - buttonWidth / 2;
-            int startY = 450;
+            int startY = 500;
 
-            // Retry Level button
-            _buttons.Add(new Button(
-                new Rectangle(startX, startY, buttonWidth, buttonHeight),
-                "RETRY LEVEL",
-                _font
-            ));
+            // Next Level or Continue button
+            if (_currentLevel < _totalLevels)
+            {
+                _buttons.Add(new Button(
+                    new Rectangle(startX, startY, buttonWidth, buttonHeight),
+                    "NEXT LEVEL",
+                    _font
+                ));
+            }
+            else
+            {
+                _buttons.Add(new Button(
+                    new Rectangle(startX, startY, buttonWidth, buttonHeight),
+                    "GAME COMPLETE",
+                    _font
+                ));
+            }
 
             // Main Menu button
             _buttons.Add(new Button(
@@ -92,10 +107,20 @@ namespace MarioGame.src._Scenes
             }
 
             // Handle button clicks
-            if (_buttons[0].WasPressed) // Retry
+            if (_buttons[0].WasPressed) // Next Level or Game Complete
             {
-                GameManager.Instance.ClearSavedGameState();
-                GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+                if (_currentLevel < _totalLevels)
+                {
+                    // Go to next level
+                    GameManager.Instance.ClearSavedGameState();
+                    GameManager.Instance.ChangeScene(new GameplayScene(_currentLevel + 1));
+                }
+                else
+                {
+                    // Game finished - go to menu
+                    GameManager.Instance.ClearSavedGameState();
+                    GameManager.Instance.ChangeScene(new MenuScene());
+                }
             }
             else if (_buttons[1].WasPressed) // Main Menu
             {
@@ -115,34 +140,40 @@ namespace MarioGame.src._Scenes
 
             if (_font != null)
             {
-                // Draw GAME OVER title
-                string title = "GAME OVER";
+                // Draw LEVEL COMPLETE title
+                string title = "LEVEL COMPLETE!";
                 Vector2 titleSize = _font.MeasureString(title);
                 spriteBatch.DrawString(_font, title,
-                    new Vector2(640 - titleSize.X / 2, 100), Color.Red);
+                    new Vector2(640 - titleSize.X / 2, 80), Color.Gold);
+
+                // Draw level info
+                string levelText = $"Level {_currentLevel} / {_totalLevels}";
+                Vector2 levelSize = _font.MeasureString(levelText);
+                spriteBatch.DrawString(_font, levelText,
+                    new Vector2(640 - levelSize.X / 2, 170), Color.LimeGreen);
 
                 // Draw statistics
-                string scoreText = $"Score: {_finalScore}";
-                Vector2 scoreSize = _font.MeasureString(scoreText);
-                spriteBatch.DrawString(_font, scoreText,
-                    new Vector2(640 - scoreSize.X / 2, 200), Color.Yellow);
-
                 string coinsText = $"Coins Collected: {_finalCoins}";
                 Vector2 coinsSize = _font.MeasureString(coinsText);
                 spriteBatch.DrawString(_font, coinsText,
-                    new Vector2(640 - coinsSize.X / 2, 260), Color.Gold);
+                    new Vector2(640 - coinsSize.X / 2, 240), Color.Yellow);
 
-                // Draw level info
-                string levelText = $"Level: {_levelIndex}";
-                Vector2 levelSize = _font.MeasureString(levelText);
-                spriteBatch.DrawString(_font, levelText,
-                    new Vector2(640 - levelSize.X / 2, 320), Color.White);
+                string bonusText = $"Level Bonus: +{_bonusScore}";
+                Vector2 bonusSize = _font.MeasureString(bonusText);
+                spriteBatch.DrawString(_font, bonusText,
+                    new Vector2(640 - bonusSize.X / 2, 290), Color.Cyan);
+
+                // Draw total score
+                string scoreText = $"Total Score: {_finalScore}";
+                Vector2 scoreSize = _font.MeasureString(scoreText);
+                spriteBatch.DrawString(_font, scoreText,
+                    new Vector2(640 - scoreSize.X / 2, 360), Color.White);
 
                 // Draw hint
                 string hint = "Click buttons below to continue";
                 Vector2 hintSize = _font.MeasureString(hint);
                 spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 390), Color.Gray);
+                    new Vector2(640 - hintSize.X / 2, 430), Color.Gray);
             }
 
             spriteBatch.End();

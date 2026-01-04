@@ -156,7 +156,9 @@ namespace MarioGame._Scenes
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false; // Reset flag for next level
-                    GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex + 1));
+                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
+                    // Show level complete scene
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player.Score, _player.Coins, 500));
                 }
                 return;
             }
@@ -168,8 +170,9 @@ namespace MarioGame._Scenes
             // Check game over
             if (_player.Lives <= 0 || _player.Position.Y > 1000)
             {
+                System.Diagnostics.Debug.WriteLine($"[GAME OVER] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
                 _isContentLoaded = false; // Reset flag for retry
-                GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _player.Score, _player.Coins));
                 return;
             }
 
