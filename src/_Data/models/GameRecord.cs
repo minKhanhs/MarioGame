@@ -17,6 +17,7 @@ namespace MarioGame.src._Data.models
         public int LevelsCompleted { get; set; }
         public float TotalTime { get; set; } // in seconds
         public int MaxLevel { get; set; }
+        public int GameMode { get; set; } // 1 = single player, 2 = two players
 
         public GameRecord()
         {
@@ -27,9 +28,10 @@ namespace MarioGame.src._Data.models
             LevelsCompleted = 0;
             TotalTime = 0f;
             MaxLevel = 1;
+            GameMode = 1;
         }
 
-        public GameRecord(string playerName, int score, int coins, int enemies, int levelsCompleted, float time, int maxLevel)
+        public GameRecord(string playerName, int score, int coins, int enemies, int levelsCompleted, float time, int maxLevel, int gameMode = 1)
         {
             PlayerName = playerName;
             PlayDate = DateTime.Now;
@@ -39,11 +41,13 @@ namespace MarioGame.src._Data.models
             LevelsCompleted = levelsCompleted;
             TotalTime = time;
             MaxLevel = maxLevel;
+            GameMode = gameMode;
         }
 
         public override string ToString()
         {
-            return $"{PlayerName} | Score: {TotalScore} | Coins: {TotalCoins} | Level: {MaxLevel} | {PlayDate:yyyy-MM-dd HH:mm}";
+            string modeStr = GameMode == 2 ? "2P" : "1P";
+            return $"[{modeStr}] {PlayerName} | Score: {TotalScore} | Coins: {TotalCoins} | Level: {MaxLevel} | {PlayDate:yyyy-MM-dd HH:mm}";
         }
     }
 
@@ -96,6 +100,16 @@ namespace MarioGame.src._Data.models
             var sorted = new List<GameRecord>(_records);
             sorted.Sort((a, b) => b.PlayDate.CompareTo(a.PlayDate));
             return sorted.Count > limit ? sorted.GetRange(0, limit) : sorted;
+        }
+
+        public List<GameRecord> Get1PlayerRecords()
+        {
+            return _records.FindAll(r => r.GameMode == 1);
+        }
+
+        public List<GameRecord> Get2PlayerRecords()
+        {
+            return _records.FindAll(r => r.GameMode == 2);
         }
 
         private void SaveRecords()

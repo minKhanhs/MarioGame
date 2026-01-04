@@ -226,7 +226,7 @@ namespace MarioGame.src._Scenes
 
         private void SaveAndGoToHistory()
         {
-            // Save record
+            // Save record with game mode
             GameRecord record = new GameRecord(
                 _playerName,
                 _finalScore,
@@ -234,7 +234,8 @@ namespace MarioGame.src._Scenes
                 _enemiesDefeated,
                 _levelsCompleted,
                 _totalTime,
-                _maxLevel
+                _maxLevel,
+                GameManager.Instance.GameMode  // Include game mode
             );
             GameRecordManager.Instance.AddRecord(record);
 

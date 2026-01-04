@@ -207,30 +207,41 @@ namespace MarioGame.src._Scenes
 
                 spriteBatch.DrawString(_font, $"Coins: {_finalCoins}", new Vector2(col1, row), Color.Yellow);
                 spriteBatch.DrawString(_font, $"Enemies: {_enemiesDefeated}", new Vector2(col2, row), Color.Red);
-                spriteBatch.DrawString(_font, $"Score: {_finalScore}", new Vector2(col3, row), Color.Lime);
+                spriteBatch.DrawString(_font, $"Time: {(int)_cumulativeTime}s", new Vector2(col3, row), Color.Cyan);
 
                 // Row 6: Score breakdown
                 row += rowHeight + 10;
-                string breakdownHeader = "BONUS:";
+                string breakdownHeader = "BREAKDOWN:";
                 spriteBatch.DrawString(_font, breakdownHeader, new Vector2(col1, row), Color.Cyan);
-                spriteBatch.DrawString(_font, $"Base: +500", new Vector2(col2, row), Color.White);
-                spriteBatch.DrawString(_font, $"Bonus: +{_bonusScore - 500}", new Vector2(col3, row), Color.Cyan);
+                
+                // Get score breakdown from HUD (if available)
+                spriteBatch.DrawString(_font, $"Base: 5000", new Vector2(col2, row), Color.White);
+                int timeDeduction = (int)(_cumulativeTime * 1); // 1 point per second
+                spriteBatch.DrawString(_font, $"Time: -{timeDeduction}", new Vector2(col3, row), Color.Orange);
 
-                // Row 7: Total Progress Header
+                // Row 7: Bonuses
+                row += rowHeight;
+                int coinBonus = _finalCoins * 50;
+                int enemyBonus = _enemiesDefeated * 100;
+                spriteBatch.DrawString(_font, $"Coins: +{coinBonus}", new Vector2(col1, row), Color.Gold);
+                spriteBatch.DrawString(_font, $"Enemies: +{enemyBonus}", new Vector2(col2, row), Color.Salmon);
+                spriteBatch.DrawString(_font, $"Bonus: +{_bonusScore - 500}", new Vector2(col3, row), Color.LimeGreen);
+
+                // Row 8: Total Progress Header
                 row += rowHeight + 10;
                 string totalHeader = "TOTAL:";
                 spriteBatch.DrawString(_font, totalHeader, new Vector2(col1, row), Color.Magenta);
                 spriteBatch.DrawString(_font, $"Coins: {_cumulativeCoins}", new Vector2(col2, row), Color.Gold);
                 spriteBatch.DrawString(_font, $"Enemies: {_cumulativeEnemies}", new Vector2(col3, row), Color.Salmon);
 
-                // Row 8: Final total score
+                // Row 9: Final total score
                 row += rowHeight;
                 string totalScore = $"TOTAL SCORE: {_cumulativeScore}";
                 Vector2 totalScoreSize = _font.MeasureString(totalScore);
                 spriteBatch.DrawString(_font, totalScore,
                     new Vector2(640 - totalScoreSize.X / 2, row), Color.LimeGreen);
 
-                // Row 9: Hint text
+                // Row 10: Hint text
                 row += rowHeight + 15;
                 string hint = "Click buttons or Press ENTER to continue";
                 Vector2 hintSize = _font.MeasureString(hint);

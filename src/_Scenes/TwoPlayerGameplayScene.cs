@@ -24,6 +24,7 @@ namespace MarioGame._Scenes
         private Camera _camera;
         private Texture2D _backgroundTex;
         private GameHUD _hud;
+        private SpriteFont _playerLabelFont;
 
         // Tr?ng thái th?ng thua
         private bool _isLevelFinished = false;
@@ -59,6 +60,7 @@ namespace MarioGame._Scenes
             try
             {
                 hudFont = content.Load<SpriteFont>("fonts/GameFont");
+                _playerLabelFont = hudFont;
             }
             catch { }
 
@@ -280,6 +282,24 @@ namespace MarioGame._Scenes
             _player1.Draw(spriteBatch);
             _player2.Draw(spriteBatch);
             spriteBatch.End();
+
+            // Draw player labels (P1, P2) on top of world
+            if (_playerLabelFont != null)
+            {
+                spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp);
+                
+                // P1 label (white/cyan color)
+                var p1Bounds = _player1.Bounds;
+                Vector2 p1LabelPos = new Vector2(p1Bounds.X + p1Bounds.Width / 2 - 8, p1Bounds.Y - 25);
+                spriteBatch.DrawString(_playerLabelFont, "P1", p1LabelPos, Color.Cyan);
+                
+                // P2 label (magenta/red color to distinguish)
+                var p2Bounds = _player2.Bounds;
+                Vector2 p2LabelPos = new Vector2(p2Bounds.X + p2Bounds.Width / 2 - 8, p2Bounds.Y - 25);
+                spriteBatch.DrawString(_playerLabelFont, "P2", p2LabelPos, Color.Magenta);
+                
+                spriteBatch.End();
+            }
 
             // Draw HUD on top
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);

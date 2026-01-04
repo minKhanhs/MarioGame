@@ -16,6 +16,12 @@ namespace MarioGame.src._Core
         private int _currentScore;
         private float _elapsedTime; // in seconds
 
+        // Scoring system
+        private const int BASE_LEVEL_SCORE = 5000;  // Starting score for the level
+        private const int TIME_PENALTY_PER_SECOND = 1;  // Points lost per second
+        private const int POINTS_PER_COIN = 50;     // Points for each coin
+        private const int POINTS_PER_ENEMY = 100;   // Points for each enemy defeated
+
         public int LivesRemaining
         {
             get { return _livesRemaining; }
@@ -59,6 +65,17 @@ namespace MarioGame.src._Core
         public void Update(GameTime gameTime)
         {
             _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
+            // Calculate score dynamically:
+            // Base score - time penalty + coin bonus + enemy bonus
+            int timeDeduction = (int)(_elapsedTime * TIME_PENALTY_PER_SECOND);
+            int coinBonus = _coinsCollected * POINTS_PER_COIN;
+            int enemyBonus = _enemiesDefeated * POINTS_PER_ENEMY;
+            
+            _currentScore = BASE_LEVEL_SCORE - timeDeduction + coinBonus + enemyBonus;
+            
+            // Ensure score doesn't go negative
+            if (_currentScore < 0) _currentScore = 0;
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -106,22 +123,33 @@ namespace MarioGame.src._Core
         }
 
         /// <summary>
-        /// Calculate bonus score based on enemies defeated and time taken
+        /// Calculate level completion bonus (separate from base score)
         /// </summary>
         public int CalculateLevelBonus()
         {
-            // Base bonus for completing level
-            int baseBonus = 500;
+            // Bonus for completing level
+            int completionBonus = 1000;
 
-            // Bonus for enemies defeated (100 points each)
-            int enemyBonus = _enemiesDefeated * 100;
+            // Time speed bonus (faster = more bonus, max 500)
+            int speedBonus = 0;
+            if (_elapsedTime < 60)
+                speedBonus = (int)(500 - (_elapsedTime * 5));
+            speedBonus = System.Math.Max(0, speedBonus);
 
-            // Time bonus (faster completion = more bonus)
-            // Max 300 bonus if completed in under 60 seconds
-            int timeBonus = _elapsedTime < 60 ? (int)(300 - (_elapsedTime * 5)) : 0;
-            timeBonus = System.Math.Max(0, timeBonus);
+            return completionBonus + speedBonus;
+        }
 
-            return baseBonus + enemyBonus + timeBonus;
+        /// <summary>
+        /// Get score breakdown for display
+        /// </summary>
+        public (int baseScore, int timeDeduction, int coinBonus, int enemyBonus, int totalScore) GetScoreBreakdown()
+        {
+            int timeDeduction = (int)(_elapsedTime * TIME_PENALTY_PER_SECOND);
+            int coinBonus = _coinsCollected * POINTS_PER_COIN;
+            int enemyBonus = _enemiesDefeated * POINTS_PER_ENEMY;
+            int totalScore = _currentScore;
+
+            return (BASE_LEVEL_SCORE, timeDeduction, coinBonus, enemyBonus, totalScore);
         }
     }
 }

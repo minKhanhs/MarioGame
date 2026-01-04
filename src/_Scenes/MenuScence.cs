@@ -145,7 +145,7 @@ namespace MarioGame.src._Scenes
             }
             else if (_buttons[2].WasPressed) // SETTINGS
             {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("SETTINGS - Coming Soon"));
+                GameManager.Instance.ChangeScene(new SettingsScene());
             }
             else if (_buttons[3].WasPressed) // ACHIEVEMENTS
             {

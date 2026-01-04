@@ -17,6 +17,7 @@ namespace MarioGame.src._Scenes
         private List<GameRecord> _records;
         private int _currentPage = 0;
         private const int RECORDS_PER_PAGE = 6;
+        private int _currentFilter = 0; // 0 = All, 1 = 1-Player, 2 = 2-Player
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
@@ -47,32 +48,50 @@ namespace MarioGame.src._Scenes
         {
             _buttons = new List<Button>();
 
-            int buttonWidth = 140;
-            int buttonHeight = 45;
-            int spacing = 15;
+            int buttonWidth = 120;
+            int buttonHeight = 40;
+            int spacing = 10;
 
             int centerX = 640;
-            int startX = centerX - (buttonWidth + spacing) / 2;
+            int startX = centerX - 200;
             int startY = 670;
 
-            // Previous Page button
+            // Filter buttons
             _buttons.Add(new Button(
-                new Rectangle(startX - 180, startY, buttonWidth, buttonHeight),
-                "PREVIOUS",
+                new Rectangle(startX, startY, buttonWidth, buttonHeight),
+                "ALL",
+                _font
+            ));
+
+            _buttons.Add(new Button(
+                new Rectangle(startX + 135, startY, buttonWidth, buttonHeight),
+                "1-PLAYER",
+                _font
+            ));
+
+            _buttons.Add(new Button(
+                new Rectangle(startX + 270, startY, buttonWidth, buttonHeight),
+                "2-PLAYER",
+                _font
+            ));
+
+            // Navigation buttons
+            _buttons.Add(new Button(
+                new Rectangle(startX - 100, startY, buttonWidth - 20, buttonHeight),
+                "PREV",
+                _font
+            ));
+
+            _buttons.Add(new Button(
+                new Rectangle(startX + 410, startY, buttonWidth - 20, buttonHeight),
+                "NEXT",
                 _font
             ));
 
             // Main Menu button
             _buttons.Add(new Button(
-                new Rectangle(startX, startY, buttonWidth, buttonHeight),
+                new Rectangle(centerX - 75, startY + 50, 150, buttonHeight),
                 "MAIN MENU",
-                _font
-            ));
-
-            // Next Page button
-            _buttons.Add(new Button(
-                new Rectangle(startX + 180, startY, buttonWidth, buttonHeight),
-                "NEXT",
                 _font
             ));
         }
@@ -93,21 +112,43 @@ namespace MarioGame.src._Scenes
                 return;
             }
 
-            // Handle button clicks
-            if (_buttons[0].WasPressed) // Previous
+            // Filter buttons
+            if (_buttons[0].WasPressed) // ALL
+            {
+                _currentFilter = 0;
+                _currentPage = 0;
+                _records = GameRecordManager.Instance.GetTopScores(100);
+            }
+            else if (_buttons[1].WasPressed) // 1-PLAYER
+            {
+                _currentFilter = 1;
+                _currentPage = 0;
+                var sorted = GameRecordManager.Instance.Get1PlayerRecords();
+                sorted.Sort((a, b) => b.TotalScore.CompareTo(a.TotalScore));
+                _records = sorted;
+            }
+            else if (_buttons[2].WasPressed) // 2-PLAYER
+            {
+                _currentFilter = 2;
+                _currentPage = 0;
+                var sorted = GameRecordManager.Instance.Get2PlayerRecords();
+                sorted.Sort((a, b) => b.TotalScore.CompareTo(a.TotalScore));
+                _records = sorted;
+            }
+            else if (_buttons[3].WasPressed) // Previous
             {
                 if (_currentPage > 0)
                     _currentPage--;
             }
-            else if (_buttons[1].WasPressed) // Main Menu
-            {
-                GameManager.Instance.ChangeScene(new MenuScene());
-            }
-            else if (_buttons[2].WasPressed) // Next
+            else if (_buttons[4].WasPressed) // Next
             {
                 int maxPages = (_records.Count + RECORDS_PER_PAGE - 1) / RECORDS_PER_PAGE;
                 if (_currentPage < maxPages - 1)
                     _currentPage++;
+            }
+            else if (_buttons[5].WasPressed) // Main Menu
+            {
+                GameManager.Instance.ChangeScene(new MenuScene());
             }
 
             // Keyboard navigation
@@ -143,26 +184,34 @@ namespace MarioGame.src._Scenes
                 spriteBatch.DrawString(_font, title,
                     new Vector2(640 - titleSize.X / 2, 15), Color.Gold);
 
+                // Draw filter info
+                string filterText = _currentFilter == 0 ? "Showing: All Records" : 
+                                   _currentFilter == 1 ? "Showing: 1-Player Only" : 
+                                   "Showing: 2-Player Only";
+                Vector2 filterSize = _font.MeasureString(filterText);
+                spriteBatch.DrawString(_font, filterText,
+                    new Vector2(640 - filterSize.X / 2, 40), Color.Cyan);
+
                 // Draw column headers with fixed widths
                 string rankHeader = "RANK";
+                string modeHeader = "MODE";
                 string nameHeader = "NAME";
                 string scoreHeader = "SCORE";
-                string coinsHeader = "COINS";
-                string levelHeader = "LEVEL";
+                string levelHeader = "LVL";
                 string dateHeader = "DATE";
 
                 int col1 = 50;      // RANK
-                int col2 = 110;     // NAME
-                int col3 = 350;     // SCORE
-                int col4 = 500;     // COINS
-                int col5 = 650;     // LEVEL
-                int col6 = 800;     // DATE
+                int col2 = 120;     // MODE
+                int col3 = 180;     // NAME
+                int col4 = 380;     // SCORE
+                int col5 = 550;     // LEVEL
+                int col6 = 650;     // DATE
 
                 int headerY = 70;
                 spriteBatch.DrawString(_font, rankHeader, new Vector2(col1, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, nameHeader, new Vector2(col2, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, scoreHeader, new Vector2(col3, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, coinsHeader, new Vector2(col4, headerY), Color.Cyan);
+                spriteBatch.DrawString(_font, modeHeader, new Vector2(col2, headerY), Color.Cyan);
+                spriteBatch.DrawString(_font, nameHeader, new Vector2(col3, headerY), Color.Cyan);
+                spriteBatch.DrawString(_font, scoreHeader, new Vector2(col4, headerY), Color.Cyan);
                 spriteBatch.DrawString(_font, levelHeader, new Vector2(col5, headerY), Color.Cyan);
                 spriteBatch.DrawString(_font, dateHeader, new Vector2(col6, headerY), Color.Cyan);
 
@@ -187,18 +236,18 @@ namespace MarioGame.src._Scenes
 
                     // Draw each column
                     string rankStr = rank.ToString("D2");
+                    string modeStr = record.GameMode == 2 ? "2P" : "1P";
                     string nameStr = record.PlayerName.Length > 15 ? record.PlayerName.Substring(0, 15) : record.PlayerName;
                     string scoreStr = record.TotalScore.ToString();
-                    string coinsStr = record.TotalCoins.ToString();
                     string levelStr = record.MaxLevel.ToString();
                     string dateStr = record.PlayDate.ToString("MM/dd");
 
                     spriteBatch.DrawString(_font, rankStr, new Vector2(col1, displayY), color);
-                    spriteBatch.DrawString(_font, nameStr, new Vector2(col2, displayY), color);
-                    spriteBatch.DrawString(_font, scoreStr, new Vector2(col3, displayY), color);
-                    spriteBatch.DrawString(_font, coinsStr, new Vector2(col4, displayY), color);
-                    spriteBatch.DrawString(_font, levelStr, new Vector2(col5, displayY), color);
-                    spriteBatch.DrawString(_font, dateStr, new Vector2(col6, displayY), color);
+                    spriteBatch.DrawString(_font, modeStr, new Vector2(col2, displayY), record.GameMode == 2 ? Color.Magenta : Color.LimeGreen);
+                    spriteBatch.DrawString(_font, nameStr, new Vector2(col3, displayY), color);
+                    spriteBatch.DrawString(_font, scoreStr, new Vector2(col4, displayY), Color.Yellow);
+                    spriteBatch.DrawString(_font, levelStr, new Vector2(col5, displayY), Color.Cyan);
+                    spriteBatch.DrawString(_font, dateStr, new Vector2(col6, displayY), Color.Gray);
 
                     displayY += 40;
                 }
@@ -209,13 +258,13 @@ namespace MarioGame.src._Scenes
                 string pageInfo = $"Page {_currentPage + 1}/{System.Math.Max(1, maxPages)} | Total Records: {totalRecords}";
                 Vector2 pageInfoSize = _font.MeasureString(pageInfo);
                 spriteBatch.DrawString(_font, pageInfo,
-                    new Vector2(640 - pageInfoSize.X / 2, 620), Color.Gray);
+                    new Vector2(640 - pageInfoSize.X / 2, 600), Color.Gray);
 
                 // Draw hint
-                string hint = "LEFT/RIGHT arrows or buttons to navigate | ESC to go back";
+                string hint = "Use filter buttons or LEFT/RIGHT arrows | ESC to go back";
                 Vector2 hintSize = _font.MeasureString(hint);
                 spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 645), Color.DarkGray);
+                    new Vector2(640 - hintSize.X / 2, 620), Color.DarkGray);
 
                 // No records message
                 if (_records.Count == 0)

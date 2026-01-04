@@ -16,8 +16,10 @@ namespace MarioGame.src._Core
 
         private Dictionary<string, Song> _songs;
         private Dictionary<string, SoundEffect> _sounds;
+        private float _musicVolume = 0.8f;
 
         public bool IsMuted { get; private set; } = false;
+        public float MusicVolume => _musicVolume;
 
         private SoundManager()
         {
@@ -25,16 +27,13 @@ namespace MarioGame.src._Core
             _sounds = new Dictionary<string, SoundEffect>();
         }
 
-        // Hàm load nhạc nền (MP3) dùng Song.FromUri
+        // Load music
         public void LoadSong(string name, string assetName)
         {
             if (_songs.ContainsKey(name)) return;
 
-            // Lấy ContentManager từ GameManager (đã gán ở Game1)
             var content = GameManager.Instance.Content;
 
-            // Cách chuẩn: Load qua Content Pipeline
-            // assetName ví dụ: "audio/titleMusic" (không có đuôi .mp3)
             try
             {
                 var song = content.Load<Song>(assetName);
@@ -46,15 +45,6 @@ namespace MarioGame.src._Core
             }
         }
 
-        // Hàm load âm thanh ngắn (WAV) - nếu sau này bạn dùng
-            /*
-            public void LoadSound(string name, string filePath, Microsoft.Xna.Framework.Content.ContentManager content)
-            {
-                 // SoundEffect thường phải load qua Content Pipeline hoặc Stream
-                 // Tạm thời để trống hoặc dùng Content.Load nếu bạn add vào MGCB
-            }
-            */
-
         public void PlayMusic(string name, bool isLooping = true)
         {
             if (IsMuted) return;
@@ -63,6 +53,7 @@ namespace MarioGame.src._Core
             {
                 MediaPlayer.IsRepeating = isLooping;
                 MediaPlayer.Play(_songs[name]);
+                MediaPlayer.Volume = _musicVolume;
             }
         }
 
@@ -75,6 +66,24 @@ namespace MarioGame.src._Core
         {
             IsMuted = !IsMuted;
             MediaPlayer.IsMuted = IsMuted;
+        }
+
+        /// <summary>
+        /// Set music volume (0.0 to 1.0)
+        /// </summary>
+        public void SetMusicVolume(float volume)
+        {
+            _musicVolume = System.Math.Clamp(volume, 0f, 1f);
+            MediaPlayer.Volume = _musicVolume;
+            System.Diagnostics.Debug.WriteLine($"[SOUND] Volume set to {_musicVolume * 100:F0}%");
+        }
+
+        /// <summary>
+        /// Get current music volume
+        /// </summary>
+        public float GetMusicVolume()
+        {
+            return _musicVolume;
         }
     }
 }
