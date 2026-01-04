@@ -147,7 +147,7 @@ namespace MarioGame.src._Scenes
             }
             else if (_buttons[3].WasPressed) // ACHIEVEMENTS
             {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("ACHIEVEMENTS - Coming Soon"));
+                GameManager.Instance.ChangeScene(new AchievementScene());
             }
             else if (_buttons[4].WasPressed) // ABOUT US
             {
@@ -163,7 +163,7 @@ namespace MarioGame.src._Scenes
             }
             else if (_buttons[7].WasPressed) // CREDITS
             {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("CREDITS - Coming Soon"));
+                GameManager.Instance.ChangeScene(new CreditsScene());
             }
             else if (_helpButton.WasPressed) // HELP
             {

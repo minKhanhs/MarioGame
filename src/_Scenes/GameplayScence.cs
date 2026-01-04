@@ -193,7 +193,11 @@ namespace MarioGame._Scenes
             {
                 System.Diagnostics.Debug.WriteLine($"[GAME OVER] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
                 _isContentLoaded = false; // Reset flag for retry
-                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _player.Score, _player.Coins));
+                
+                // Update session stats before game over
+                GameSession.Instance.AddLevelStats(_player.Score, _player.Coins, _hud.EnemiesDefeated, _hud.ElapsedTime);
+                
+                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _player.Score, _player.Coins, _hud.EnemiesDefeated));
                 return;
             }
 

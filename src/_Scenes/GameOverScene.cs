@@ -2,6 +2,7 @@
 using MarioGame.src._Scenes;
 using MarioGame.src._UI;
 using MarioGame._Scenes;
+using MarioGame.src._Data.models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -16,15 +17,39 @@ namespace MarioGame.src._Scenes
         private int _levelIndex;
         private int _finalScore;
         private int _finalCoins;
+        private int _enemiesDefeated;
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
 
-        public GameOverScene(int levelIndex, int score, int coins)
+        public GameOverScene(int levelIndex, int score, int coins, int enemies = 0)
         {
             _levelIndex = levelIndex;
             _finalScore = score;
             _finalCoins = coins;
+            _enemiesDefeated = enemies;
+
+            // Check and unlock achievements
+            CheckAchievements();
+        }
+
+        private void CheckAchievements()
+        {
+            // Get cumulative stats from GameSession
+            GameSession session = GameSession.Instance;
+
+            AchievementManager.Instance.CheckAndUnlockAchievements(
+                _finalCoins,           // coins this level
+                _enemiesDefeated,      // enemies this level
+                _finalScore,           // score this level
+                0,                     // level time (not available in GameOver)
+                session.TotalEnemiesDefeated,  // total enemies
+                session.TotalCoins,             // total coins
+                session.TotalScore,             // total score
+                true                            // took damage (game over = took damage)
+            );
+
+            AchievementManager.Instance.SaveAll();
         }
 
         public void LoadContent()
@@ -132,11 +157,16 @@ namespace MarioGame.src._Scenes
                 spriteBatch.DrawString(_font, coinsText,
                     new Vector2(640 - coinsSize.X / 2, 260), Color.Gold);
 
+                string enemiesText = $"Enemies Defeated: {_enemiesDefeated}";
+                Vector2 enemiesSize = _font.MeasureString(enemiesText);
+                spriteBatch.DrawString(_font, enemiesText,
+                    new Vector2(640 - enemiesSize.X / 2, 320), Color.Red);
+
                 // Draw level info
                 string levelText = $"Level: {_levelIndex}";
                 Vector2 levelSize = _font.MeasureString(levelText);
                 spriteBatch.DrawString(_font, levelText,
-                    new Vector2(640 - levelSize.X / 2, 320), Color.White);
+                    new Vector2(640 - levelSize.X / 2, 360), Color.White);
 
                 // Draw hint
                 string hint = "Click buttons below to continue";

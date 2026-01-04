@@ -2,6 +2,7 @@ using MarioGame.src._Core;
 using MarioGame.src._Scenes;
 using MarioGame.src._UI;
 using MarioGame._Scenes;
+using MarioGame.src._Data.models;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -131,6 +132,20 @@ namespace MarioGame.src._Scenes
                 {
                     // Game finished - go to name input scene
                     GameManager.Instance.ClearSavedGameState();
+                    
+                    // Check achievements before going to name input
+                    AchievementManager.Instance.CheckAndUnlockAchievements(
+                        _cumulativeCoins,
+                        _cumulativeEnemies,
+                        _cumulativeScore,
+                        _cumulativeTime,
+                        _cumulativeEnemies,
+                        _cumulativeCoins,
+                        _cumulativeScore,
+                        false  // completed game without dying
+                    );
+                    AchievementManager.Instance.SaveAll();
+                    
                     GameManager.Instance.ChangeScene(new PlayerNameInputScene(
                         _cumulativeScore, 
                         _cumulativeCoins, 
