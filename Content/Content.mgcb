@@ -19,6 +19,13 @@
 /processorParam:Quality=Best
 /build:audio/titleMusic.mp3
 
+#begin fonts/GameFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:fonts/GameFont.spritefont
+
 #begin sprites/background.png
 /importer:TextureImporter
 /processor:TextureProcessor
