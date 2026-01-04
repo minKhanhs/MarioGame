@@ -22,6 +22,7 @@ namespace MarioGame._Scenes
         private Player _player;
         private Camera _camera;
         private Texture2D _backgroundTex;
+        private GameHUD _hud;
 
         // Trạng thái thắng thua
         private bool _isLevelFinished = false;
@@ -51,6 +52,16 @@ namespace MarioGame._Scenes
 
             _camera = new Camera(device.Viewport);
             _backgroundTex = content.Load<Texture2D>("sprites/background");
+
+            // Load HUD font
+            SpriteFont hudFont = null;
+            try
+            {
+                hudFont = content.Load<SpriteFont>("fonts/GameFont");
+            }
+            catch { }
+
+            _hud = new GameHUD(hudFont);
 
             // --- LOAD TEXTURES & MAP ---
             var textures = new Dictionary<string, Texture2D>();
@@ -101,6 +112,11 @@ namespace MarioGame._Scenes
             _player.Coins = savedState.PlayerCoins;
             _player.Score = savedState.PlayerScore;
 
+            // Restore HUD
+            _hud.LivesRemaining = savedState.PlayerLives;
+            _hud.CoinsCollected = savedState.PlayerCoins;
+            _hud.CurrentScore = savedState.PlayerScore;
+
             System.Diagnostics.Debug.WriteLine($"[RESUME] Restored player at {_player.Position}, Lives: {_player.Lives}");
         }
 
@@ -112,6 +128,7 @@ namespace MarioGame._Scenes
             {
                 _gameObjects = MapLoader.LoadLevel(levelPath);
                 _player = new Player(new Vector2(50, 200), playerAnims);
+                _hud.Reset();
                 System.Diagnostics.Debug.WriteLine($"[NEW GAME] Loaded level {_levelIndex}");
             }
             catch
@@ -123,6 +140,9 @@ namespace MarioGame._Scenes
 
         public void Update(GameTime gameTime)
         {
+            // Update HUD
+            _hud.Update(gameTime);
+
             // Skip first frame after resume to prevent ESC collision
             if (_isResumingFromPause)
             {
@@ -156,9 +176,10 @@ namespace MarioGame._Scenes
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false; // Reset flag for next level
-                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
+                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}, Time: {_hud.ElapsedTime:F1}s, Enemies: {_hud.EnemiesDefeated}");
                     // Show level complete scene
-                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player.Score, _player.Coins, 500));
+                    int bonusScore = _hud.CalculateLevelBonus();
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player.Score, _player.Coins, bonusScore, _hud.EnemiesDefeated));
                 }
                 return;
             }
@@ -205,6 +226,7 @@ namespace MarioGame._Scenes
                         {
                             enemy.OnStomped();
                             _player.Velocity.Y = -5f;
+                            _hud.EnemiesDefeated++; // Track enemy defeat
                         }
                         else
                             _player.TakeDamage();
@@ -220,6 +242,11 @@ namespace MarioGame._Scenes
                 if (!obj.IsActive)
                     _gameObjects.RemoveAt(i);
             }
+
+            // Update HUD with current player stats
+            _hud.LivesRemaining = _player.Lives;
+            _hud.CoinsCollected = _player.Coins;
+            _hud.CurrentScore = _player.Score;
 
             // Update camera
             Rectangle mapBounds = new Rectangle(0, 0, 3200, 736);
@@ -240,6 +267,11 @@ namespace MarioGame._Scenes
                 if (_camera.IsVisible(obj.Bounds))
                     obj.Draw(spriteBatch);
             _player.Draw(spriteBatch);
+            spriteBatch.End();
+
+            // Draw HUD on top
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            _hud.Draw(spriteBatch);
             spriteBatch.End();
         }
 

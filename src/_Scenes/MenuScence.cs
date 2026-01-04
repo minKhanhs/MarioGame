@@ -159,7 +159,7 @@ namespace MarioGame.src._Scenes
             }
             else if (_buttons[6].WasPressed) // PLAY HISTORY
             {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("PLAY HISTORY - Coming Soon"));
+                GameManager.Instance.ChangeScene(new PlayHistoryScene());
             }
             else if (_buttons[7].WasPressed) // CREDITS
             {
