@@ -124,9 +124,16 @@ namespace MarioGame.src._Scenes
             {
                 if (_currentLevel < _totalLevels)
                 {
-                    // Go to next level
+                    // Go to next level - check game mode
                     GameManager.Instance.ClearSavedGameState();
-                    GameManager.Instance.ChangeScene(new GameplayScene(_currentLevel + 1));
+                    if (GameManager.Instance.GameMode == 2)
+                    {
+                        GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(_currentLevel + 1));
+                    }
+                    else
+                    {
+                        GameManager.Instance.ChangeScene(new GameplayScene(_currentLevel + 1));
+                    }
                 }
                 else
                 {

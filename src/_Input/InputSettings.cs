@@ -33,20 +33,21 @@ namespace MarioGame.src._Input
 
         private void SetDefaultKeys()
         {
-            // Cấu hình mặc định Player 1 (WASD + Space)
-            P1_KeyMap[EGameAction.MoveLeft] = Keys.A;
-            P1_KeyMap[EGameAction.MoveRight] = Keys.D;
-            P1_KeyMap[EGameAction.Jump] = Keys.Space; // Hoặc W
-            P1_KeyMap[EGameAction.Run] = Keys.LeftShift;
-            P1_KeyMap[EGameAction.Attack] = Keys.J;
+            // Cấu hình mặc định Player 1 (Arrow Keys - để support single player)
+            // Khi chơi 2 người, P1 có thể remap sang WASD nếu cần
+            P1_KeyMap[EGameAction.MoveLeft] = Keys.Left;
+            P1_KeyMap[EGameAction.MoveRight] = Keys.Right;
+            P1_KeyMap[EGameAction.Jump] = Keys.Up;
+            P1_KeyMap[EGameAction.Run] = Keys.RightControl;
+            P1_KeyMap[EGameAction.Attack] = Keys.RightShift;
             P1_KeyMap[EGameAction.Pause] = Keys.Escape;
 
-            // Cấu hình mặc định Player 2 (Mũi tên + NumPad)
-            P2_KeyMap[EGameAction.MoveLeft] = Keys.Left;
-            P2_KeyMap[EGameAction.MoveRight] = Keys.Right;
-            P2_KeyMap[EGameAction.Jump] = Keys.Up;
-            P2_KeyMap[EGameAction.Run] = Keys.RightControl;
-            P2_KeyMap[EGameAction.Attack] = Keys.NumPad1;
+            // Cấu hình mặc định Player 2 (WASD + Space)
+            P2_KeyMap[EGameAction.MoveLeft] = Keys.A;
+            P2_KeyMap[EGameAction.MoveRight] = Keys.D;
+            P2_KeyMap[EGameAction.Jump] = Keys.W;
+            P2_KeyMap[EGameAction.Run] = Keys.LeftShift;
+            P2_KeyMap[EGameAction.Attack] = Keys.J;
             P2_KeyMap[EGameAction.Pause] = Keys.Back;
         }
 

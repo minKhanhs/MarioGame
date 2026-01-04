@@ -135,11 +135,13 @@ namespace MarioGame.src._Scenes
             // Handle button clicks
             if (_buttons[0].WasPressed) // 1 PLAYER
             {
+                GameManager.Instance.GameMode = 1;
                 GameManager.Instance.ChangeScene(new GameplayScene(1));
             }
             else if (_buttons[1].WasPressed) // 2 PLAYERS
             {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("2 PLAYER MODE - Coming Soon"));
+                GameManager.Instance.GameMode = 2;
+                GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(1));
             }
             else if (_buttons[2].WasPressed) // SETTINGS
             {

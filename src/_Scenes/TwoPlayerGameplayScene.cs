@@ -1,4 +1,4 @@
-﻿using MarioGame.src._Entities.Base;
+using MarioGame.src._Entities.Base;
 using MarioGame.src._Entities.enemies;
 using MarioGame.src._Entities.Enviroments;
 using MarioGame.src._Entities.items;
@@ -15,35 +15,36 @@ using System.Collections.Generic;
 
 namespace MarioGame._Scenes
 {
-    public class GameplayScene : IScene
+    public class TwoPlayerGameplayScene : IScene
     {
         private int _levelIndex;
         private List<GameObj> _gameObjects;
-        private Player _player;
+        private Player _player1;
+        private Player _player2;
         private Camera _camera;
         private Texture2D _backgroundTex;
         private GameHUD _hud;
 
-        // Trạng thái thắng thua
+        // Tr?ng th�i th?ng thua
         private bool _isLevelFinished = false;
         private float _finishTimer = 0f;
 
-        // Quản lý pause
+        // Qu?n l� pause
         private bool _isPaused = false;
         private KeyboardState _previousKeyboardState;
         private bool _isResumingFromPause = false;
 
-        // Kiểm tra xem đã load content chưa
+        // Ki?m tra xem ?� load content ch?a
         private bool _isContentLoaded = false;
 
-        public GameplayScene(int levelIndex)
+        public TwoPlayerGameplayScene(int levelIndex)
         {
             _levelIndex = levelIndex;
         }
 
         public void LoadContent()
         {
-            // Tránh load content nhiều lần
+            // Tr�nh load content nhi?u l?n
             if (_isContentLoaded)
                 return;
 
@@ -82,42 +83,10 @@ namespace MarioGame._Scenes
 
             MapLoader.Initialize(textures);
 
-            // Check if we're resuming from pause
-            GameState savedState = GameManager.Instance.GetSavedGameState();
-            if (savedState.IsValid && savedState.LevelIndex == _levelIndex)
-            {
-                // RESTORE từ saved state (PAUSE RESUME)
-                RestoreGameState(savedState, playerAnims);
-                _isResumingFromPause = true;
-                GameManager.Instance.ClearSavedGameState();
-            }
-            else
-            {
-                // LOAD level bình thường (NEW GAME)
-                LoadLevelFromFile(playerAnims);
-            }
+            // LOAD level b�nh th??ng
+            LoadLevelFromFile(playerAnims);
 
             _isContentLoaded = true;
-        }
-
-        private void RestoreGameState(GameState savedState, Dictionary<string, SpriteAnimation> playerAnims)
-        {
-            // Restore game objects
-            _gameObjects = new List<GameObj>(savedState.GameObjects);
-
-            // Restore player with PlayerIndex = 1 for single-player
-            _player = new Player(savedState.PlayerPosition, playerAnims, 1);
-            _player.Velocity = savedState.PlayerVelocity;
-            _player.Lives = savedState.PlayerLives;
-            _player.Coins = savedState.PlayerCoins;
-            _player.Score = savedState.PlayerScore;
-
-            // Restore HUD
-            _hud.LivesRemaining = savedState.PlayerLives;
-            _hud.CoinsCollected = savedState.PlayerCoins;
-            _hud.CurrentScore = savedState.PlayerScore;
-
-            System.Diagnostics.Debug.WriteLine($"[RESUME] Restored player at {_player.Position}, Lives: {_player.Lives}");
         }
 
         private void LoadLevelFromFile(Dictionary<string, SpriteAnimation> playerAnims)
@@ -127,10 +96,13 @@ namespace MarioGame._Scenes
             try
             {
                 _gameObjects = MapLoader.LoadLevel(levelPath);
-                // Single-player uses PlayerIndex = 1
-                _player = new Player(new Vector2(50, 200), playerAnims, 1);
+                
+                // Create 2 players with different starting positions
+                _player1 = new Player(new Vector2(50, 200), playerAnims, 1);
+                _player2 = new Player(new Vector2(100, 200), playerAnims, 2);
+                
                 _hud.Reset();
-                System.Diagnostics.Debug.WriteLine($"[NEW GAME] Loaded level {_levelIndex}");
+                System.Diagnostics.Debug.WriteLine($"[TWO PLAYER] Loaded level {_levelIndex}");
             }
             catch
             {
@@ -170,35 +142,41 @@ namespace MarioGame._Scenes
             if (_isPaused)
                 return;
 
-            // Check level completion
+            // Check level completion - BOTH players must reach goal
             if (_isLevelFinished)
             {
                 _finishTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false; // Reset flag for next level
-                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}, Time: {_hud.ElapsedTime:F1}s, Enemies: {_hud.EnemiesDefeated}");
-                    // Show level complete scene
+                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex} (2 Players)");
                     int bonusScore = _hud.CalculateLevelBonus();
-                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player.Score, _player.Coins, bonusScore, _hud.EnemiesDefeated));
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player1.Score + _player2.Score, _player1.Coins + _player2.Coins, bonusScore, _hud.EnemiesDefeated));
                 }
                 return;
             }
 
-            // Update game logic
-            _player.Update(gameTime);
-            _player.IsOnGround = false;
+            // Update both players
+            _player1.Update(gameTime);
+            _player1.IsOnGround = false;
+            
+            _player2.Update(gameTime);
+            _player2.IsOnGround = false;
 
-            // Check game over
-            if (_player.Lives <= 0 || _player.Position.Y > 1000)
+            // Check if any player died
+            if (_player1.Lives <= 0 || _player1.Position.Y > 1000 || _player2.Lives <= 0 || _player2.Position.Y > 1000)
             {
-                System.Diagnostics.Debug.WriteLine($"[GAME OVER] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
-                _isContentLoaded = false; // Reset flag for retry
+                System.Diagnostics.Debug.WriteLine($"[GAME OVER] Level {_levelIndex} (2 Players)");
+                _isContentLoaded = false;
                 
-                // Update session stats before game over
-                GameSession.Instance.AddLevelStats(_player.Score, _player.Coins, _hud.EnemiesDefeated, _hud.ElapsedTime);
+                // Determine which player died
+                string deathReason = "";
+                if (_player1.Lives <= 0) deathReason = "Player 1 died";
+                else if (_player1.Position.Y > 1000) deathReason = "Player 1 fell";
+                else if (_player2.Lives <= 0) deathReason = "Player 2 died";
+                else deathReason = "Player 2 fell";
                 
-                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _player.Score, _player.Coins, _hud.EnemiesDefeated));
+                GameManager.Instance.ChangeScene(new TwoPlayerGameOverScene(_levelIndex, _player1.Score + _player2.Score, _player1.Coins + _player2.Coins, deathReason));
                 return;
             }
 
@@ -218,44 +196,72 @@ namespace MarioGame._Scenes
 
                 if (obj.IsActive)
                 {
-                    // Player collision with blocks
+                    // Player 1 collisions
                     if (obj is Block)
-                        Collision.ResolveStaticCollision(_player, obj);
-                    // Item collection
-                    else if (obj is Item item && _player.Bounds.Intersects(item.Bounds))
-                        item.OnCollect(_player);
-                    // Enemy interaction
-                    else if (obj is Enemy enemy && _player.Bounds.Intersects(enemy.Bounds))
+                        Collision.ResolveStaticCollision(_player1, obj);
+                    else if (obj is Item item && _player1.Bounds.Intersects(item.Bounds))
+                        item.OnCollect(_player1);
+                    else if (obj is Enemy enemy && _player1.Bounds.Intersects(enemy.Bounds))
                     {
-                        if (Collision.IsTopCollision(_player, enemy))
+                        if (Collision.IsTopCollision(_player1, enemy))
                         {
                             enemy.OnStomped();
-                            _player.Velocity.Y = -5f;
-                            _hud.EnemiesDefeated++; // Track enemy defeat
+                            _player1.Velocity.Y = -5f;
+                            _hud.EnemiesDefeated++;
                         }
                         else
-                            _player.TakeDamage();
+                            _player1.TakeDamage();
                     }
-                    // Level completion
-                    else if (obj is Castle && _player.Bounds.Intersects(obj.Bounds))
+
+                    // Player 2 collisions
+                    if (obj is Block)
+                        Collision.ResolveStaticCollision(_player2, obj);
+                    else if (obj is Item item2 && _player2.Bounds.Intersects(item2.Bounds))
+                        item2.OnCollect(_player2);
+                    else if (obj is Enemy enemy2 && _player2.Bounds.Intersects(enemy2.Bounds))
                     {
-                        System.Diagnostics.Debug.WriteLine("LEVEL COMPLETE!");
-                        _isLevelFinished = true;
+                        if (Collision.IsTopCollision(_player2, enemy2))
+                        {
+                            enemy2.OnStomped();
+                            _player2.Velocity.Y = -5f;
+                            _hud.EnemiesDefeated++;
+                        }
+                        else
+                            _player2.TakeDamage();
+                    }
+
+                    // Level completion - both players must reach goal
+                    if (obj is Castle)
+                    {
+                        if (_player1.Bounds.Intersects(obj.Bounds))
+                            _player1.HasReachedGoal = true;
+                        
+                        if (_player2.Bounds.Intersects(obj.Bounds))
+                            _player2.HasReachedGoal = true;
+
+                        // Both reached goal
+                        if (_player1.HasReachedGoal && _player2.HasReachedGoal)
+                        {
+                            System.Diagnostics.Debug.WriteLine("LEVEL COMPLETE (BOTH PLAYERS)!");
+                            _isLevelFinished = true;
+                        }
                     }
                 }
 
-                if (!obj.IsActive)
+                if (!obj.IsActive && !(obj is Castle && (_player1.HasReachedGoal || _player2.HasReachedGoal)))
                     _gameObjects.RemoveAt(i);
             }
 
-            // Update HUD with current player stats
-            _hud.LivesRemaining = _player.Lives;
-            _hud.CoinsCollected = _player.Coins;
-            _hud.CurrentScore = _player.Score;
+            // Update HUD with combined stats
+            _hud.LivesRemaining = System.Math.Min(_player1.Lives, _player2.Lives); // Show minimum lives
+            _hud.CoinsCollected = _player1.Coins + _player2.Coins;
+            _hud.CurrentScore = _player1.Score + _player2.Score;
 
-            // Update camera
+            // Update camera to follow average position of both players
+            Vector2 avgPos = new Vector2((_player1.Position.X + _player2.Position.X) / 2, (_player1.Position.Y + _player2.Position.Y) / 2);
+            
             Rectangle mapBounds = new Rectangle(0, 0, 3200, 736);
-            _camera.Update(_player.Position, mapBounds);
+            _camera.Update(avgPos, mapBounds);
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -271,7 +277,8 @@ namespace MarioGame._Scenes
             foreach (var obj in _gameObjects)
                 if (_camera.IsVisible(obj.Bounds))
                     obj.Draw(spriteBatch);
-            _player.Draw(spriteBatch);
+            _player1.Draw(spriteBatch);
+            _player2.Draw(spriteBatch);
             spriteBatch.End();
 
             // Draw HUD on top
@@ -288,16 +295,16 @@ namespace MarioGame._Scenes
             GameState state = new GameState
             {
                 LevelIndex = _levelIndex,
-                PlayerPosition = _player.Position,
-                PlayerVelocity = _player.Velocity,
-                PlayerLives = _player.Lives,
-                PlayerCoins = _player.Coins,
-                PlayerScore = _player.Score,
+                PlayerPosition = _player1.Position,
+                PlayerVelocity = _player1.Velocity,
+                PlayerLives = _player1.Lives,
+                PlayerCoins = _player1.Coins,
+                PlayerScore = _player1.Score,
                 GameObjects = new List<GameObj>(_gameObjects),
                 IsValid = true
             };
 
-            System.Diagnostics.Debug.WriteLine($"[PAUSE] Saved state - Player at {_player.Position}, Lives: {_player.Lives}");
+            System.Diagnostics.Debug.WriteLine($"[PAUSE] Saved 2-player state");
 
             GameManager.Instance.SaveGameState(state);
             GameManager.Instance.ChangeScene(new PauseScene(_levelIndex));

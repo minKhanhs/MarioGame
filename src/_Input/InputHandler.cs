@@ -10,8 +10,8 @@ namespace MarioGame.src._Input
 {
     public class InputHandler
     {
-        // PlayerIndex của MonoGame (One, Two, Three, Four)
-        public InputFrame GetInput(PlayerIndex playerIndex)
+        // Handle both custom PlayerIndex (1, 2) and MonoGame PlayerIndex (One, Two)
+        public InputFrame GetInput(int playerIndex)
         {
             InputFrame frame = new InputFrame();
             KeyboardState state = Keyboard.GetState();
@@ -19,11 +19,11 @@ namespace MarioGame.src._Input
             // 1. Xác định lấy cấu hình của người chơi nào
             Dictionary<EGameAction, Keys> keyMap;
 
-            if (playerIndex == PlayerIndex.One)
+            if (playerIndex == 1 || playerIndex == (int)PlayerIndex.One)
             {
                 keyMap = InputSettings.Instance.P1_KeyMap;
             }
-            else if (playerIndex == PlayerIndex.Two)
+            else if (playerIndex == 2 || playerIndex == (int)PlayerIndex.Two)
             {
                 keyMap = InputSettings.Instance.P2_KeyMap;
             }
@@ -33,23 +33,36 @@ namespace MarioGame.src._Input
             }
 
             // 2. Xử lý di chuyển (X_Axis)
-            if (state.IsKeyDown(keyMap[EGameAction.MoveLeft]))
+            if (keyMap.ContainsKey(EGameAction.MoveLeft) && state.IsKeyDown(keyMap[EGameAction.MoveLeft]))
             {
                 frame.X_Axis -= 1.0f;
             }
 
-            if (state.IsKeyDown(keyMap[EGameAction.MoveRight]))
+            if (keyMap.ContainsKey(EGameAction.MoveRight) && state.IsKeyDown(keyMap[EGameAction.MoveRight]))
             {
                 frame.X_Axis += 1.0f;
             }
 
             // 3. Xử lý các hành động khác
-            frame.IsJumpPressed = state.IsKeyDown(keyMap[EGameAction.Jump]);
-            frame.IsRunPressed = state.IsKeyDown(keyMap[EGameAction.Run]);
-            frame.IsAttackPressed = state.IsKeyDown(keyMap[EGameAction.Attack]);
-            frame.IsPausePressed = state.IsKeyDown(keyMap[EGameAction.Pause]);
+            if (keyMap.ContainsKey(EGameAction.Jump))
+                frame.IsJumpPressed = state.IsKeyDown(keyMap[EGameAction.Jump]);
+            
+            if (keyMap.ContainsKey(EGameAction.Run))
+                frame.IsRunPressed = state.IsKeyDown(keyMap[EGameAction.Run]);
+            
+            if (keyMap.ContainsKey(EGameAction.Attack))
+                frame.IsAttackPressed = state.IsKeyDown(keyMap[EGameAction.Attack]);
+            
+            if (keyMap.ContainsKey(EGameAction.Pause))
+                frame.IsPausePressed = state.IsKeyDown(keyMap[EGameAction.Pause]);
 
             return frame;
+        }
+
+        // Overload for MonoGame PlayerIndex enum
+        public InputFrame GetInput(PlayerIndex playerIndex)
+        {
+            return GetInput((int)playerIndex);
         }
     }
 }

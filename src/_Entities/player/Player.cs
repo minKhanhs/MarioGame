@@ -20,12 +20,16 @@ namespace MarioGame.src._Entities.player
         private SpriteAnimation _currentAnim;
         private SpriteEffects _flipEffect = SpriteEffects.None;
 
+        // Player identification
+        public int PlayerIndex { get; set; } = 1; // 1 or 2
+
         // Thông số Gameplay
         public float Scale { get; set; } = 1.0f;
         public int Lives { get; set; } = 3;
         public int Coins { get; set; } = 0;
         public int Score { get; set; } = 0;
         public bool IsInvincible { get; set; } = false;
+        public bool HasReachedGoal { get; set; } = false;
 
         // Hằng số vật lý
         private const float MOVE_SPEED = 200f; // Pixel per second
@@ -33,11 +37,12 @@ namespace MarioGame.src._Entities.player
         private float _invincibleTimer = 0f;
         private const float INVINCIBLE_DELAY = 2.0f;
 
-        public Player(Vector2 startPos, Dictionary<string, SpriteAnimation> animations)
+        public Player(Vector2 startPos, Dictionary<string, SpriteAnimation> animations, int playerIndex = 1)
         {
             Position = startPos;
             _animations = animations;
             _inputHandler = new InputHandler();
+            PlayerIndex = playerIndex;
             SetState(new SmallState());
             // Mặc định là đứng yên
             _currentAnim = _animations["Idle"];
@@ -48,11 +53,13 @@ namespace MarioGame.src._Entities.player
             _currentState = newState;
             _currentState.Enter(this);
         }
+        
         public void StartInvincible()
         {
             IsInvincible = true;
             _invincibleTimer = INVINCIBLE_DELAY; // Bắt đầu đếm ngược 2 giây
         }
+        
         public override void Update(GameTime gameTime)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -71,7 +78,7 @@ namespace MarioGame.src._Entities.player
                 }
             }
             // 1. Xử lý Input
-            var input = _inputHandler.GetInput(PlayerIndex.One);
+            var input = _inputHandler.GetInput(PlayerIndex);
 
             // Di chuyển trái phải
             Velocity.X = input.X_Axis * 200f * (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -110,6 +117,7 @@ namespace MarioGame.src._Entities.player
 
             // 3. Logic khác (Cooldown bất tử, animation...)
         }
+        
         public override Rectangle Bounds
         {
             get
@@ -134,7 +142,7 @@ namespace MarioGame.src._Entities.player
 
         public void Die()
         {
-            System.Diagnostics.Debug.WriteLine("Mario Die!");
+            System.Diagnostics.Debug.WriteLine($"Player {PlayerIndex} died!");
             Lives--; // Trừ mạng
 
             if (Lives > 0)

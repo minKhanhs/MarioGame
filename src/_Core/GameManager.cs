@@ -49,6 +49,9 @@ namespace MarioGame.src._Core
         public Microsoft.Xna.Framework.Content.ContentManager Content { get; set; }
         public GraphicsDevice GraphicsDevice { get; set; }
 
+        // Game mode tracking (1 = single player, 2 = two player)
+        public int GameMode { get; set; } = 1;
+
         // Game state for pause/resume functionality
         private GameState _savedGameState;
 
