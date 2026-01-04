@@ -11,6 +11,7 @@ namespace MarioGame
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        public static Texture2D WhitePixel { get; private set; }
 
         public Game1()
         {
@@ -29,6 +30,10 @@ namespace MarioGame
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+
+            // Create white pixel for drawing borders and rectangles
+            WhitePixel = new Texture2D(GraphicsDevice, 1, 1);
+            WhitePixel.SetData(new[] { Color.White });
 
             // Cấu hình GameManager
             GameManager.Instance.Content = Content;
