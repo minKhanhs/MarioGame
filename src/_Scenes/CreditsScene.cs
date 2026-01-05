@@ -102,31 +102,27 @@ namespace MarioGame.src._Scenes
 
                 DrawCreditSection(spriteBatch, "DEVELOPMENT", contentY, new Color(230, 0, 18), new[]
                 {
-                    "Lead Developer",
-                    "Game Design & Programming",
+                    "LE HOANG HIEP",
+                    "LE MINH KHANH",
                     "",
-                    "Graphics Artist", 
-                    "Sprite & Asset Design",
-                    ""
                 });
 
                 contentY += sectionSpacing;
 
                 DrawCreditSection(spriteBatch, "LEVEL DESIGN", contentY, new Color(67, 176, 71), new[]
                 {
-                    "Level Designer",
-                    "Map Creation & Gameplay",
+                    "LE HOANG HIEP",
+                    "LE MINH KHANH",
                     "",
-                    "Game Designer",
-                    "Mechanics & Balance"
                 });
 
                 contentY += sectionSpacing;
 
                 DrawCreditSection(spriteBatch, "QUALITY ASSURANCE", contentY, new Color(251, 208, 0), new[]
                 {
-                    "QA Lead",
-                    "Testing & Bug Reports"
+                    "LE HOANG HIEP",
+                    "LE MINH KHANH",
+                    "",
                 });
 
                 // Footer
@@ -135,7 +131,7 @@ namespace MarioGame.src._Scenes
                     spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
                 }
 
-                spriteBatch.DrawString(_font, "Built with MonoGame & .NET 8  |  2024",
+                spriteBatch.DrawString(_font, "Built with MonoGame & .NET 8  |  2025",
                     new Vector2(350, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
