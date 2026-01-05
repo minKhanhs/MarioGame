@@ -113,7 +113,16 @@ namespace MarioGame._Scenes
             {
                 System.Diagnostics.Debug.WriteLine("[RESTART] Level restarting");
                 GameManager.Instance.ClearSavedGameState();
-                GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+                
+                // Restart with correct game mode
+                if (GameManager.Instance.GameMode == 2)
+                {
+                    GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(_levelIndex));
+                }
+                else
+                {
+                    GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+                }
             }
             else if (_buttons[2].WasPressed) // Main Menu
             {
@@ -163,8 +172,15 @@ namespace MarioGame._Scenes
 
         private void ResumeGame()
         {
-            // Return to gameplay WITHOUT reloading content
-            GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+            // Return to gameplay with correct game mode WITHOUT reloading content
+            if (GameManager.Instance.GameMode == 2)
+            {
+                GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(_levelIndex));
+            }
+            else
+            {
+                GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
+            }
         }
     }
 }

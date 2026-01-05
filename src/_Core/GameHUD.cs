@@ -15,12 +15,16 @@ namespace MarioGame.src._Core
         private int _enemiesDefeated;
         private int _currentScore;
         private float _elapsedTime; // in seconds
+        private int _mushroomsCollected; // Track mushroom pickups
+        private int _deathCount; // Track deaths
 
-        // Scoring system
-        private const int BASE_LEVEL_SCORE = 5000;  // Starting score for the level
-        private const int TIME_PENALTY_PER_SECOND = 1;  // Points lost per second
-        private const int POINTS_PER_COIN = 50;     // Points for each coin
-        private const int POINTS_PER_ENEMY = 100;   // Points for each enemy defeated
+        // Scoring system - NEW FORMULA
+        private const int BASE_SCORE = 500;           // Starting score
+        private const int TIME_PENALTY_PER_SECOND = 1; // -1 per second
+        private const int POINTS_PER_COIN = 200;      // +200 per coin
+        private const int POINTS_PER_ENEMY = 100;     // +100 per enemy defeated
+        private const int POINTS_PER_MUSHROOM = 500;  // +500 per mushroom collected
+        private const int POINTS_PER_DEATH = -200;    // -200 per death
 
         public int LivesRemaining
         {
@@ -52,6 +56,18 @@ namespace MarioGame.src._Core
             set { _elapsedTime = value; }
         }
 
+        public int MushroomsCollected
+        {
+            get { return _mushroomsCollected; }
+            set { _mushroomsCollected = value; }
+        }
+
+        public int DeathCount
+        {
+            get { return _deathCount; }
+            set { _deathCount = value; }
+        }
+
         public GameHUD(SpriteFont font)
         {
             _font = font;
@@ -60,19 +76,23 @@ namespace MarioGame.src._Core
             _enemiesDefeated = 0;
             _currentScore = 0;
             _elapsedTime = 0f;
+            _mushroomsCollected = 0;
+            _deathCount = 0;
         }
 
         public void Update(GameTime gameTime)
         {
             _elapsedTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
             
-            // Calculate score dynamically:
-            // Base score - time penalty + coin bonus + enemy bonus
+            // Calculate score dynamically using new formula:
+            // Base + Coin bonus + Enemy bonus + Mushroom bonus - Time penalty - Death penalty
             int timeDeduction = (int)(_elapsedTime * TIME_PENALTY_PER_SECOND);
             int coinBonus = _coinsCollected * POINTS_PER_COIN;
             int enemyBonus = _enemiesDefeated * POINTS_PER_ENEMY;
+            int mushroomBonus = _mushroomsCollected * POINTS_PER_MUSHROOM;
+            int deathPenalty = _deathCount * POINTS_PER_DEATH;
             
-            _currentScore = BASE_LEVEL_SCORE - timeDeduction + coinBonus + enemyBonus;
+            _currentScore = BASE_SCORE + coinBonus + enemyBonus + mushroomBonus - timeDeduction + deathPenalty;
             
             // Ensure score doesn't go negative
             if (_currentScore < 0) _currentScore = 0;
@@ -95,7 +115,7 @@ namespace MarioGame.src._Core
             string livesText = $"LIVES: {_livesRemaining}";
             spriteBatch.DrawString(_font, livesText, new Vector2(padding, yPos), Color.Red);
 
-            // Draw Score
+            // Draw Score (REAL-TIME)
             string scoreText = $"SCORE: {_currentScore}";
             Vector2 scoreSize = _font.MeasureString(scoreText);
             spriteBatch.DrawString(_font, scoreText, new Vector2(640 - scoreSize.X / 2, yPos), Color.Yellow);
@@ -109,8 +129,11 @@ namespace MarioGame.src._Core
             int minutes = (int)(_elapsedTime / 60);
             int seconds = (int)(_elapsedTime % 60);
             string timeText = $"TIME: {minutes:D2}:{seconds:D2}";
-            Vector2 timeSize = _font.MeasureString(timeText);
-            spriteBatch.DrawString(_font, timeText, new Vector2(640 - timeSize.X / 2 + 350, yPos), Color.Cyan);
+            spriteBatch.DrawString(_font, timeText, new Vector2(320, yPos), Color.Cyan);
+
+            // Draw Enemies defeated
+            string enemiesText = $"ENEMIES: {_enemiesDefeated}";
+            spriteBatch.DrawString(_font, enemiesText, new Vector2(900, yPos), Color.Lime);
         }
 
         public void Reset()
@@ -120,6 +143,8 @@ namespace MarioGame.src._Core
             _enemiesDefeated = 0;
             _currentScore = 0;
             _elapsedTime = 0f;
+            _mushroomsCollected = 0;
+            _deathCount = 0;
         }
 
         /// <summary>
@@ -142,14 +167,16 @@ namespace MarioGame.src._Core
         /// <summary>
         /// Get score breakdown for display
         /// </summary>
-        public (int baseScore, int timeDeduction, int coinBonus, int enemyBonus, int totalScore) GetScoreBreakdown()
+        public (int baseScore, int timeDeduction, int coinBonus, int enemyBonus, int mushroomBonus, int deathPenalty, int totalScore) GetScoreBreakdown()
         {
             int timeDeduction = (int)(_elapsedTime * TIME_PENALTY_PER_SECOND);
             int coinBonus = _coinsCollected * POINTS_PER_COIN;
             int enemyBonus = _enemiesDefeated * POINTS_PER_ENEMY;
+            int mushroomBonus = _mushroomsCollected * POINTS_PER_MUSHROOM;
+            int deathPenalty = _deathCount * POINTS_PER_DEATH;
             int totalScore = _currentScore;
 
-            return (BASE_LEVEL_SCORE, timeDeduction, coinBonus, enemyBonus, totalScore);
+            return (BASE_SCORE, timeDeduction, coinBonus, enemyBonus, mushroomBonus, deathPenalty, totalScore);
         }
     }
 }

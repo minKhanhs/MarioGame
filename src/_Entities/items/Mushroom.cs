@@ -40,7 +40,8 @@ namespace MarioGame.src._Entities.items
         {
             // Biến Mario thành người lớn
             player.SetState(new BigState());
-            player.Score += 1000;
+            // Don't add score here - let GameplayScene handle it via HUD
+            // Just track that a mushroom was collected
             IsActive = false;
         }
 

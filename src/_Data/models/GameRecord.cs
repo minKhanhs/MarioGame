@@ -49,6 +49,18 @@ namespace MarioGame.src._Data.models
             string modeStr = GameMode == 2 ? "2P" : "1P";
             return $"[{modeStr}] {PlayerName} | Score: {TotalScore} | Coins: {TotalCoins} | Level: {MaxLevel} | {PlayDate:yyyy-MM-dd HH:mm}";
         }
+
+        public string GetFormattedDuration()
+        {
+            int hours = (int)(TotalTime / 3600);
+            int minutes = (int)((TotalTime % 3600) / 60);
+            int seconds = (int)(TotalTime % 60);
+
+            if (hours > 0)
+                return $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+            else
+                return $"{minutes:D2}:{seconds:D2}";
+        }
     }
 
     /// <summary>

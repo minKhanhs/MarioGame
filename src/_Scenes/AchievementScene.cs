@@ -7,19 +7,19 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarioGame.src._Scenes
 {
     public class AchievementScene : IScene
     {
         private SpriteFont _font;
-        private List<Button> _buttons;
+        private Button _backButton;
         private List<Achievement> _achievements;
-        private int _currentPage = 0;
-        private const int ACHIEVEMENTS_PER_PAGE = 6;
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
+        private int _scrollOffset = 0;
 
         public void LoadContent()
         {
@@ -38,51 +38,29 @@ namespace MarioGame.src._Scenes
             }
 
             _achievements = AchievementManager.Instance.GetAllAchievements();
-
             InitializeButtons();
             _isContentLoaded = true;
         }
 
         private void InitializeButtons()
         {
-            _buttons = new List<Button>();
-
-            int buttonWidth = 140;
-            int buttonHeight = 45;
-            int spacing = 15;
-
-            int centerX = 640;
-            int startX = centerX - (buttonWidth + spacing) / 2;
-            int startY = 670;
-
-            // Previous Page button
-            _buttons.Add(new Button(
-                new Rectangle(startX - 180, startY, buttonWidth, buttonHeight),
-                "PREVIOUS",
+            _backButton = new Button(
+                new Rectangle(640 - 70, 680, 140, 40),
+                "BACK",
                 _font
-            ));
-
-            // Main Menu button
-            _buttons.Add(new Button(
-                new Rectangle(startX, startY, buttonWidth, buttonHeight),
-                "MAIN MENU",
-                _font
-            ));
-
-            // Next Page button
-            _buttons.Add(new Button(
-                new Rectangle(startX + 180, startY, buttonWidth, buttonHeight),
-                "NEXT",
-                _font
-            ));
+            )
+            {
+                BackgroundColor = new Color(230, 0, 18),
+                HoverBackgroundColor = new Color(200, 0, 10),
+                BorderColor = Color.Black,
+                TextColor = Color.White,
+                TextScale = 0.5f
+            };
         }
 
         public void Update(GameTime gameTime)
         {
-            foreach (var button in _buttons)
-            {
-                button.Update(gameTime);
-            }
+            _backButton.Update(gameTime);
 
             KeyboardState currentKeyboardState = Keyboard.GetState();
 
@@ -93,36 +71,23 @@ namespace MarioGame.src._Scenes
                 return;
             }
 
-            // Handle button clicks
-            if (_buttons[0].WasPressed) // Previous
-            {
-                if (_currentPage > 0)
-                    _currentPage--;
-            }
-            else if (_buttons[1].WasPressed) // Main Menu
+            // Back button
+            if (currentKeyboardState.IsKeyDown(Keys.Escape) || _backButton.WasPressed)
             {
                 GameManager.Instance.ChangeScene(new MenuScene());
-            }
-            else if (_buttons[2].WasPressed) // Next
-            {
-                int maxPages = (_achievements.Count + ACHIEVEMENTS_PER_PAGE - 1) / ACHIEVEMENTS_PER_PAGE;
-                if (_currentPage < maxPages - 1)
-                    _currentPage++;
+                return;
             }
 
-            // Keyboard navigation
-            if (currentKeyboardState.IsKeyDown(Keys.Left) && !_previousKeyboardState.IsKeyDown(Keys.Left))
+            // Scroll with arrow keys
+            if (currentKeyboardState.IsKeyDown(Keys.Up) && !_previousKeyboardState.IsKeyDown(Keys.Up))
             {
-                if (_currentPage > 0) _currentPage--;
+                _scrollOffset -= 20;
+                if (_scrollOffset < 0) _scrollOffset = 0;
             }
-            else if (currentKeyboardState.IsKeyDown(Keys.Right) && !_previousKeyboardState.IsKeyDown(Keys.Right))
+            else if (currentKeyboardState.IsKeyDown(Keys.Down) && !_previousKeyboardState.IsKeyDown(Keys.Down))
             {
-                int maxPages = (_achievements.Count + ACHIEVEMENTS_PER_PAGE - 1) / ACHIEVEMENTS_PER_PAGE;
-                if (_currentPage < maxPages - 1) _currentPage++;
-            }
-            else if (currentKeyboardState.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
-            {
-                GameManager.Instance.ChangeScene(new MenuScene());
+                _scrollOffset += 20;
+                if (_scrollOffset > 300) _scrollOffset = 300;
             }
 
             _previousKeyboardState = currentKeyboardState;
@@ -131,86 +96,231 @@ namespace MarioGame.src._Scenes
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(18, 18, 18)); // Dark background
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             if (_font != null)
             {
-                // Draw title
-                string title = "ACHIEVEMENTS";
-                Vector2 titleSize = _font.MeasureString(title);
-                spriteBatch.DrawString(_font, title,
-                    new Vector2(640 - titleSize.X / 2, 15), Color.Gold);
-
-                // Draw progress
-                int unlockedCount = AchievementManager.Instance.GetUnlockedCount();
-                int totalCount = _achievements.Count;
-                string progress = $"Progress: {unlockedCount}/{totalCount}";
-                Vector2 progressSize = _font.MeasureString(progress);
-                spriteBatch.DrawString(_font, progress,
-                    new Vector2(640 - progressSize.X / 2, 55), Color.Cyan);
-
-                // Draw separator
+                // Header bar
                 if (Game1.WhitePixel != null)
                 {
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(50, 85, 1180, 2), Color.Cyan);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 0, 1280, 80), new Color(230, 0, 18));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 76, 1280, 4), Color.Black);
                 }
 
-                // Draw achievements for current page
-                int startIndex = _currentPage * ACHIEVEMENTS_PER_PAGE;
-                int endIndex = System.Math.Min(startIndex + ACHIEVEMENTS_PER_PAGE, _achievements.Count);
+                // Title
+                spriteBatch.DrawString(_font, "ACHIEVEMENTS", new Vector2(60, 20), Color.White, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_font, "JOURNEY TO RESCUE THE PRINCESS", new Vector2(60, 48), Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
 
-                int displayY = 115;
-                for (int i = startIndex; i < endIndex; i++)
+                // Progress section
+                int unlockedCount = _achievements.Count(a => a.IsUnlocked);
+                DrawProgressCards(spriteBatch, unlockedCount);
+
+                // Achievements grid
+                DrawAchievementsGrid(spriteBatch);
+
+                // Footer
+                if (Game1.WhitePixel != null)
                 {
-                    Achievement ach = _achievements[i];
-
-                    // Locked or Unlocked
-                    string lockIcon = ach.IsUnlocked ? "[*]" : "[ ]";
-                    Color color = ach.IsUnlocked ? Color.LimeGreen : Color.DarkGray;
-
-                    // Achievement line
-                    string achLine = $"{lockIcon} {ach.Name}";
-                    spriteBatch.DrawString(_font, achLine, new Vector2(80, displayY), color);
-
-                    // Description
-                    string descLine = $"    {ach.Description}";
-                    spriteBatch.DrawString(_font, descLine, new Vector2(100, displayY + 25), ach.IsUnlocked ? Color.Yellow : Color.Gray);
-
-                    // Unlock date
-                    if (ach.IsUnlocked && ach.UnlockedDate.HasValue)
-                    {
-                        string dateStr = $"    Unlocked: {ach.UnlockedDate:MM/dd/yyyy}";
-                        spriteBatch.DrawString(_font, dateStr, new Vector2(100, displayY + 45), Color.LightGray);
-                    }
-
-                    displayY += 90;
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
                 }
 
-                // Draw page info
-                int maxPages = (_achievements.Count + ACHIEVEMENTS_PER_PAGE - 1) / ACHIEVEMENTS_PER_PAGE;
-                string pageInfo = $"Page {_currentPage + 1}/{System.Math.Max(1, maxPages)}";
-                Vector2 pageInfoSize = _font.MeasureString(pageInfo);
-                spriteBatch.DrawString(_font, pageInfo,
-                    new Vector2(640 - pageInfoSize.X / 2, 620), Color.Gray);
-
-                // Draw hint
-                string hint = "LEFT/RIGHT arrows or buttons to navigate | ESC to go back";
-                Vector2 hintSize = _font.MeasureString(hint);
-                spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 645), Color.DarkGray);
+                spriteBatch.DrawString(_font, "UP/DOWN: Scroll  |  ESC: Back",
+                    new Vector2(400, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();
 
-            // Draw buttons
+            // Draw back button
             spriteBatch.Begin();
-            foreach (var button in _buttons)
-            {
-                button.Draw(spriteBatch);
-            }
+            _backButton.Draw(spriteBatch);
             spriteBatch.End();
+        }
+
+        private void DrawProgressCards(SpriteBatch spriteBatch, int unlockedCount)
+        {
+            int y = 100;
+            int cardX = 50;
+            int cardSpacing = 350;
+            int cardWidth = 300;
+            int cardHeight = 80;
+
+            // Total Achievements card
+            if (Game1.WhitePixel != null)
+            {
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, cardHeight), new Color(36, 36, 36));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y + cardHeight - 2, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, 2, cardHeight), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX + cardWidth - 2, y, 2, cardHeight), new Color(64, 64, 64));
+            }
+
+            spriteBatch.DrawString(_font, "TOTAL", new Vector2(cardX + 15, y + 8), new Color(156, 163, 175), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "ACHIEVEMENTS", new Vector2(cardX + 15, y + 20), new Color(156, 163, 175), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, $"{unlockedCount}/{_achievements.Count}", new Vector2(cardX + 15, y + 40), Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+
+            // Get stats from GameSession
+            var gameSession = GameSession.Instance;
+            int totalCoins = gameSession?.TotalCoins ?? 0;
+            int totalEnemies = gameSession?.TotalEnemiesDefeated ?? 0;
+
+            // Coins card
+            cardX += cardSpacing;
+            if (Game1.WhitePixel != null)
+            {
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, cardHeight), new Color(36, 36, 36));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y + cardHeight - 2, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, 2, cardHeight), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX + cardWidth - 2, y, 2, cardHeight), new Color(64, 64, 64));
+            }
+
+            spriteBatch.DrawString(_font, "TOTAL COINS", new Vector2(cardX + 15, y + 15), new Color(156, 163, 175), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, totalCoins.ToString(), new Vector2(cardX + 15, y + 40), new Color(251, 208, 0), 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+
+            // Enemies card
+            cardX += cardSpacing;
+            if (Game1.WhitePixel != null)
+            {
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, cardHeight), new Color(36, 36, 36));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y + cardHeight - 2, cardWidth, 2), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX, y, 2, cardHeight), new Color(64, 64, 64));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(cardX + cardWidth - 2, y, 2, cardHeight), new Color(64, 64, 64));
+            }
+
+            spriteBatch.DrawString(_font, "ENEMIES", new Vector2(cardX + 15, y + 8), new Color(156, 163, 175), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "DEFEATED", new Vector2(cardX + 15, y + 20), new Color(156, 163, 175), 0f, Vector2.Zero, 0.3f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, totalEnemies.ToString(), new Vector2(cardX + 15, y + 40), new Color(67, 176, 71), 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+        }
+
+        private void DrawAchievementsGrid(SpriteBatch spriteBatch)
+        {
+            int startY = 210;
+            int gridStartX = 50;
+            int cardWidth = 370;
+            int cardHeight = 100;
+            int gridSpacing = 30;
+            int cardsPerRow = 2;
+
+            var clippingRect = new Rectangle(40, 210, 1200, 435);
+            var previousScissor = spriteBatch.GraphicsDevice.ScissorRectangle;
+
+            spriteBatch.End();
+            spriteBatch.GraphicsDevice.ScissorRectangle = clippingRect;
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp, rasterizerState: new RasterizerState { ScissorTestEnable = true });
+
+            int currentY = startY - _scrollOffset;
+
+            for (int i = 0; i < _achievements.Count; i++)
+            {
+                int row = i / cardsPerRow;
+                int col = i % cardsPerRow;
+                int x = gridStartX + col * (cardWidth + gridSpacing);
+                int y = currentY + row * (cardHeight + gridSpacing);
+
+                DrawAchievementCard(spriteBatch, _achievements[i], x, y, cardWidth, cardHeight);
+            }
+
+            spriteBatch.End();
+            spriteBatch.GraphicsDevice.ScissorRectangle = previousScissor;
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        }
+
+        private void DrawAchievementCard(SpriteBatch spriteBatch, Achievement ach, int x, int y, int width, int height)
+        {
+            Color borderColor = ach.IsUnlocked ? new Color(230, 0, 18) : new Color(64, 64, 64);
+            Color bgColor = new Color(36, 36, 36);
+
+            if (Game1.WhitePixel != null)
+            {
+                // Card background
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, width, height), bgColor);
+
+                // Card borders
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, width, 3), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y + height - 3, width, 3), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, 3, height), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 3, y, 3, height), borderColor);
+            }
+
+            // Status badge
+            if (ach.IsUnlocked && Game1.WhitePixel != null)
+            {
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 55, y + 5, 50, 16), new Color(230, 0, 18));
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 55, y + 5, 50, 2), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 55, y + 19, 50, 2), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 55, y + 5, 2, 16), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 5, y + 5, 2, 16), Color.Black);
+                spriteBatch.DrawString(_font, "DONE", new Vector2(x + width - 52, y + 5), Color.White, 0f, Vector2.Zero, 0.25f, SpriteEffects.None, 0f);
+            }
+
+            // Icon placeholder
+            if (Game1.WhitePixel != null)
+            {
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 20, 40, 40), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 20, 40, 2), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 58, 40, 2), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 20, 2, 40), borderColor);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 48, y + 20, 2, 40), borderColor);
+            }
+
+            // Title
+            string title = ach.Name.Length > 16 ? ach.Name.Substring(0, 16) : ach.Name;
+            spriteBatch.DrawString(_font, title, new Vector2(x + 60, y + 22), borderColor, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+
+            // Description - larger font
+            string desc = ach.Description;
+            if (desc.Length > 40)
+            {
+                desc = desc.Substring(0, 37) + "...";
+            }
+            spriteBatch.DrawString(_font, desc, new Vector2(x + 10, y + 62), new Color(200, 200, 200), 0f, Vector2.Zero, 0.32f, SpriteEffects.None, 0f);
+
+            // Progress bar
+            int barWidth = width - 20;
+            if (!ach.IsUnlocked && HasProgressTowards(ach))
+            {
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 8), Color.Black);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 2), new Color(64, 64, 64));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 88, barWidth, 2), new Color(64, 64, 64));
+                }
+
+                int fillWidth = barWidth / 2;
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, fillWidth, 8), borderColor);
+                }
+            }
+            else if (ach.IsUnlocked)
+            {
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 8), Color.Black);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 2), new Color(64, 64, 64));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 88, barWidth, 2), new Color(64, 64, 64));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 8), borderColor);
+                }
+            }
+            else
+            {
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 8), Color.Black);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 82, barWidth, 2), new Color(64, 64, 64));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + 10, y + 88, barWidth, 2), new Color(64, 64, 64));
+                }
+
+                spriteBatch.DrawString(_font, "LOCKED", new Vector2(x + width / 2 - 20, y + 80), new Color(156, 163, 175), 0f, Vector2.Zero, 0.28f, SpriteEffects.None, 0f);
+            }
+        }
+
+        private bool HasProgressTowards(Achievement ach)
+        {
+            return ach.Id.Contains("coin") || ach.Id.Contains("enemy") || ach.Id.Contains("score");
         }
     }
 }

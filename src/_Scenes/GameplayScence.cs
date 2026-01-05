@@ -2,6 +2,7 @@
 using MarioGame.src._Entities.enemies;
 using MarioGame.src._Entities.Enviroments;
 using MarioGame.src._Entities.items;
+using MarioGame.src._Entities.player.states;
 using MarioGame.src._Core;
 using MarioGame.src._Core.Camera;
 using MarioGame.src._Data;
@@ -23,6 +24,7 @@ namespace MarioGame._Scenes
         private Camera _camera;
         private Texture2D _backgroundTex;
         private GameHUD _hud;
+        private int _previousPlayerLives = 3; // Track previous frame's lives to detect death
 
         // Trạng thái thắng thua
         private bool _isLevelFinished = false;
@@ -93,7 +95,12 @@ namespace MarioGame._Scenes
             }
             else
             {
-                // LOAD level bình thường (NEW GAME)
+                // LOAD level bình thường (NEW GAME or NEXT LEVEL)
+                // If loading level 1, reset GameSession for new game
+                if (_levelIndex == 1)
+                {
+                    GameSession.Instance.ResetSession();
+                }
                 LoadLevelFromFile(playerAnims);
             }
 
@@ -111,13 +118,28 @@ namespace MarioGame._Scenes
             _player.Lives = savedState.PlayerLives;
             _player.Coins = savedState.PlayerCoins;
             _player.Score = savedState.PlayerScore;
+            _player.Scale = savedState.PlayerScale;
+            _previousPlayerLives = _player.Lives;
 
-            // Restore HUD
+            // Restore player state based on scale
+            if (_player.Scale > 1.2f)
+            {
+                _player.SetState(new BigState());
+            }
+            else
+            {
+                _player.SetState(new SmallState());
+            }
+
+            // Restore HUD with all state
             _hud.LivesRemaining = savedState.PlayerLives;
             _hud.CoinsCollected = savedState.PlayerCoins;
-            _hud.CurrentScore = savedState.PlayerScore;
+            _hud.ElapsedTime = savedState.ElapsedTime;
+            _hud.EnemiesDefeated = savedState.EnemiesDefeated;
+            _hud.MushroomsCollected = savedState.MushroomsCollected;
+            _hud.DeathCount = savedState.DeathCount;
 
-            System.Diagnostics.Debug.WriteLine($"[RESUME] Restored player at {_player.Position}, Lives: {_player.Lives}");
+            System.Diagnostics.Debug.WriteLine($"[RESUME] Restored player at {_player.Position}, Lives: {_player.Lives}, Scale: {_player.Scale}");
         }
 
         private void LoadLevelFromFile(Dictionary<string, SpriteAnimation> playerAnims)
@@ -129,6 +151,7 @@ namespace MarioGame._Scenes
                 _gameObjects = MapLoader.LoadLevel(levelPath);
                 // Single-player uses PlayerIndex = 1
                 _player = new Player(new Vector2(50, 200), playerAnims, 1);
+                _previousPlayerLives = _player.Lives;
                 _hud.Reset();
                 System.Diagnostics.Debug.WriteLine($"[NEW GAME] Loaded level {_levelIndex}");
             }
@@ -177,10 +200,10 @@ namespace MarioGame._Scenes
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false; // Reset flag for next level
-                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}, Time: {_hud.ElapsedTime:F1}s, Enemies: {_hud.EnemiesDefeated}");
-                    // Show level complete scene
+                    System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex}, Score: {_hud.CurrentScore}, Coins: {_hud.CoinsCollected}, Time: {_hud.ElapsedTime:F1}s, Enemies: {_hud.EnemiesDefeated}");
+                    // Show level complete scene with HUD score (not player.Score)
                     int bonusScore = _hud.CalculateLevelBonus();
-                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player.Score, _player.Coins, bonusScore, _hud.EnemiesDefeated));
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _hud.CurrentScore, _hud.CoinsCollected, bonusScore, _hud.EnemiesDefeated, _hud.ElapsedTime, _hud.MushroomsCollected, _hud.DeathCount));
                 }
                 return;
             }
@@ -189,16 +212,26 @@ namespace MarioGame._Scenes
             _player.Update(gameTime);
             _player.IsOnGround = false;
 
+            // Check if player died
+            if (_player.Lives < _previousPlayerLives)
+            {
+                _hud.DeathCount++;
+                _previousPlayerLives = _player.Lives;
+            }
+            else if (_player.Lives == _previousPlayerLives)
+            {
+                _previousPlayerLives = _player.Lives;
+            }
+
             // Check game over
             if (_player.Lives <= 0 || _player.Position.Y > 1000)
             {
                 System.Diagnostics.Debug.WriteLine($"[GAME OVER] Level {_levelIndex}, Score: {_player.Score}, Coins: {_player.Coins}");
                 _isContentLoaded = false; // Reset flag for retry
                 
-                // Update session stats before game over
-                GameSession.Instance.AddLevelStats(_player.Score, _player.Coins, _hud.EnemiesDefeated, _hud.ElapsedTime);
-                
-                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _player.Score, _player.Coins, _hud.EnemiesDefeated));
+                // DON'T update session stats here - will be handled by GameOverScene if needed
+                // Just pass the current level stats
+                GameManager.Instance.ChangeScene(new GameOverScene(_levelIndex, _hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated));
                 return;
             }
 
@@ -223,7 +256,13 @@ namespace MarioGame._Scenes
                         Collision.ResolveStaticCollision(_player, obj);
                     // Item collection
                     else if (obj is Item item && _player.Bounds.Intersects(item.Bounds))
+                    {
+                        if (item is Mushroom)
+                        {
+                            _hud.MushroomsCollected++;
+                        }
                         item.OnCollect(_player);
+                    }
                     // Enemy interaction
                     else if (obj is Enemy enemy && _player.Bounds.Intersects(enemy.Bounds))
                     {
@@ -248,10 +287,10 @@ namespace MarioGame._Scenes
                     _gameObjects.RemoveAt(i);
             }
 
-            // Update HUD with current player stats
+            // Update HUD with current player stats (coins only - score is calculated by HUD)
             _hud.LivesRemaining = _player.Lives;
             _hud.CoinsCollected = _player.Coins;
-            _hud.CurrentScore = _player.Score;
+            // Don't override CurrentScore - let HUD calculate it based on formula
 
             // Update camera
             Rectangle mapBounds = new Rectangle(0, 0, 3200, 736);
@@ -284,7 +323,7 @@ namespace MarioGame._Scenes
         {
             _isPaused = true;
 
-            // Save complete game state
+            // Save complete game state including HUD
             GameState state = new GameState
             {
                 LevelIndex = _levelIndex,
@@ -293,11 +332,17 @@ namespace MarioGame._Scenes
                 PlayerLives = _player.Lives,
                 PlayerCoins = _player.Coins,
                 PlayerScore = _player.Score,
+                PlayerScale = _player.Scale,
                 GameObjects = new List<GameObj>(_gameObjects),
+                // Save HUD state
+                ElapsedTime = _hud.ElapsedTime,
+                EnemiesDefeated = _hud.EnemiesDefeated,
+                MushroomsCollected = _hud.MushroomsCollected,
+                DeathCount = _hud.DeathCount,
                 IsValid = true
             };
 
-            System.Diagnostics.Debug.WriteLine($"[PAUSE] Saved state - Player at {_player.Position}, Lives: {_player.Lives}");
+            System.Diagnostics.Debug.WriteLine($"[PAUSE] Saved state - Player at {_player.Position}, Lives: {_player.Lives}, Scale: {_player.Scale}, Time: {_hud.ElapsedTime:F1}s");
 
             GameManager.Instance.SaveGameState(state);
             GameManager.Instance.ChangeScene(new PauseScene(_levelIndex));

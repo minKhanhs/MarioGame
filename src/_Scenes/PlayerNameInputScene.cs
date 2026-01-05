@@ -65,21 +65,33 @@ namespace MarioGame.src._Scenes
 
             int centerX = 640;
             int startX = centerX - buttonWidth / 2;
-            int startY = 500;
+            int startY = 530;
 
             // Submit button
             _buttons.Add(new Button(
                 new Rectangle(startX - 100, startY, buttonWidth, buttonHeight),
                 "SUBMIT",
                 _font
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(230, 0, 18),
+                BorderColor = Color.White,
+                TextColor = Color.White
+            });
 
             // Clear button
             _buttons.Add(new Button(
                 new Rectangle(startX + 100, startY, buttonWidth, buttonHeight),
                 "CLEAR",
                 _font
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = Color.White,
+                BorderColor = Color.White,
+                TextColor = Color.White
+            });
         }
 
         public void Update(GameTime gameTime)
@@ -149,68 +161,70 @@ namespace MarioGame.src._Scenes
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(18, 18, 18));
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             if (_font != null)
             {
-                // Draw title
-                string title = "ENTER YOUR NAME";
-                Vector2 titleSize = _font.MeasureString(title);
-                spriteBatch.DrawString(_font, title,
-                    new Vector2(640 - titleSize.X / 2, 80), Color.Gold);
+                // Header bar (red) - matching AboutUs style
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 0, 1280, 80), new Color(230, 0, 18));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 76, 1280, 4), Color.Black);
+                }
+
+                // Title
+                spriteBatch.DrawString(_font, "GAME COMPLETE!", new Vector2(60, 20), Color.White, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_font, "ENTER YOUR NAME", new Vector2(60, 48), Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+
+                // Content section
+                int contentY = 110;
+                int lineHeight = 30;
+
+                // Input field label
+                spriteBatch.DrawString(_font, "PLAYER NAME:", new Vector2(100, contentY), Color.Cyan, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
 
                 // Draw input field background
                 if (Game1.WhitePixel != null)
                 {
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(350, 180, 580, 60), Color.DarkGray);
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(350, 180, 580, 60), Color.White * 0.3f);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(100, contentY, 1080, 50), new Color(32, 32, 32));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(100, contentY, 1080, 2), new Color(100, 100, 100));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(100, contentY + 48, 1080, 2), new Color(100, 100, 100));
                 }
 
                 // Draw player name
                 spriteBatch.DrawString(_font, _playerName.Length > 0 ? _playerName : "Type your name...",
-                    new Vector2(370, 195), _playerName.Length > 0 ? Color.White : Color.Gray);
+                    new Vector2(120, contentY + 12), _playerName.Length > 0 ? Color.White : Color.Gray, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 
-                // Draw cursor
-                if ((_playerName.Length > 0))
+                // Separator
+                contentY += 65;
+                if (Game1.WhitePixel != null)
                 {
-                    Vector2 nameSize = _font.MeasureString(_playerName);
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle((int)(370 + nameSize.X), 195, 2, 30), Color.White);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(100, contentY, 1080, 2), new Color(100, 100, 100));
                 }
 
-                // Draw stats
-                string statsTitle = "Final Statistics:";
-                Vector2 statsTitleSize = _font.MeasureString(statsTitle);
-                spriteBatch.DrawString(_font, statsTitle,
-                    new Vector2(640 - statsTitleSize.X / 2, 280), Color.Cyan);
+                // Statistics header
+                contentY += 20;
+                spriteBatch.DrawString(_font, "FINAL STATISTICS:", new Vector2(100, contentY), Color.Cyan, 0f, Vector2.Zero, 0.45f, SpriteEffects.None, 0f);
+                contentY += 35;
 
-                int statY = 330;
-                string scoreText = $"Total Score: {_finalScore}";
-                Vector2 scoreSize = _font.MeasureString(scoreText);
-                spriteBatch.DrawString(_font, scoreText,
-                    new Vector2(640 - scoreSize.X / 2, statY), Color.Yellow);
+                spriteBatch.DrawString(_font, $"Total Score: {_finalScore}", new Vector2(120, contentY), Color.Yellow, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, $"Total Coins: {_finalCoins}", new Vector2(120, contentY), Color.Gold, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, $"Enemies Defeated: {_enemiesDefeated}", new Vector2(120, contentY), Color.Red, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, $"Levels Completed: {_levelsCompleted}", new Vector2(120, contentY), Color.LimeGreen, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 
-                string coinsText = $"Total Coins: {_finalCoins}";
-                Vector2 coinsSize = _font.MeasureString(coinsText);
-                spriteBatch.DrawString(_font, coinsText,
-                    new Vector2(640 - coinsSize.X / 2, statY + 40), Color.Gold);
-
-                string enemiesText = $"Enemies Defeated: {_enemiesDefeated}";
-                Vector2 enemiesSize = _font.MeasureString(enemiesText);
-                spriteBatch.DrawString(_font, enemiesText,
-                    new Vector2(640 - enemiesSize.X / 2, statY + 80), Color.Red);
-
-                string levelText = $"Max Level Reached: {_maxLevel}";
-                Vector2 levelSize = _font.MeasureString(levelText);
-                spriteBatch.DrawString(_font, levelText,
-                    new Vector2(640 - levelSize.X / 2, statY + 120), Color.LimeGreen);
-
-                // Draw hint
-                string hint = "Press ENTER or click SUBMIT to save";
-                Vector2 hintSize = _font.MeasureString(hint);
-                spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 580), Color.Gray);
+                // Footer
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
+                }
+                spriteBatch.DrawString(_font, "Click buttons below to continue",
+                    new Vector2(500, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();

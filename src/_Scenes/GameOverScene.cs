@@ -29,13 +29,13 @@ namespace MarioGame.src._Scenes
             _finalCoins = coins;
             _enemiesDefeated = enemies;
 
-            // Check and unlock achievements
+            // Check and unlock achievements (but don't add to session yet)
             CheckAchievements();
         }
 
         private void CheckAchievements()
         {
-            // Get cumulative stats from GameSession
+            // Get current session stats (before adding this level)
             GameSession session = GameSession.Instance;
 
             AchievementManager.Instance.CheckAndUnlockAchievements(
@@ -82,21 +82,33 @@ namespace MarioGame.src._Scenes
 
             int centerX = 640;
             int startX = centerX - buttonWidth / 2;
-            int startY = 450;
+            int startY = 500;
 
             // Retry Level button
             _buttons.Add(new Button(
                 new Rectangle(startX, startY, buttonWidth, buttonHeight),
                 "RETRY LEVEL",
                 _font
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(230, 0, 18),
+                BorderColor = Color.White,
+                TextColor = Color.White
+            });
 
             // Main Menu button
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight),
                 "MAIN MENU",
                 _font
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = Color.White,
+                BorderColor = Color.White,
+                TextColor = Color.White
+            });
         }
 
         public void Update(GameTime gameTime)
@@ -120,11 +132,14 @@ namespace MarioGame.src._Scenes
             if (_buttons[0].WasPressed) // Retry
             {
                 GameManager.Instance.ClearSavedGameState();
+                // Don't add to GameSession - it will reset when GameplayScene loads level 1
+                // (or retry same level without resetting)
                 GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
             }
             else if (_buttons[1].WasPressed) // Main Menu
             {
                 GameManager.Instance.ClearSavedGameState();
+                // Menu will reset GameSession when player clicks "1 PLAYER" or "2 PLAYERS"
                 GameManager.Instance.ChangeScene(new MenuScene());
             }
 
@@ -134,45 +149,44 @@ namespace MarioGame.src._Scenes
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(18, 18, 18));
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             if (_font != null)
             {
-                // Draw GAME OVER title
-                string title = "GAME OVER";
-                Vector2 titleSize = _font.MeasureString(title);
-                spriteBatch.DrawString(_font, title,
-                    new Vector2(640 - titleSize.X / 2, 100), Color.Red);
+                // Header bar (red) - matching AboutUs style
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 0, 1280, 80), new Color(230, 0, 18));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 76, 1280, 4), Color.Black);
+                }
 
-                // Draw statistics
-                string scoreText = $"Score: {_finalScore}";
-                Vector2 scoreSize = _font.MeasureString(scoreText);
-                spriteBatch.DrawString(_font, scoreText,
-                    new Vector2(640 - scoreSize.X / 2, 200), Color.Yellow);
+                // Title
+                spriteBatch.DrawString(_font, "GAME OVER", new Vector2(60, 20), Color.White, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_font, $"Level {_levelIndex}", new Vector2(60, 48), Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
 
-                string coinsText = $"Coins Collected: {_finalCoins}";
-                Vector2 coinsSize = _font.MeasureString(coinsText);
-                spriteBatch.DrawString(_font, coinsText,
-                    new Vector2(640 - coinsSize.X / 2, 260), Color.Gold);
+                // Content section
+                int contentY = 110;
+                int lineHeight = 35;
 
-                string enemiesText = $"Enemies Defeated: {_enemiesDefeated}";
-                Vector2 enemiesSize = _font.MeasureString(enemiesText);
-                spriteBatch.DrawString(_font, enemiesText,
-                    new Vector2(640 - enemiesSize.X / 2, 320), Color.Red);
+                // Statistics header
+                spriteBatch.DrawString(_font, "FINAL STATISTICS:", new Vector2(100, contentY), Color.Cyan, 0f, Vector2.Zero, 0.45f, SpriteEffects.None, 0f);
+                contentY += 40;
 
-                // Draw level info
-                string levelText = $"Level: {_levelIndex}";
-                Vector2 levelSize = _font.MeasureString(levelText);
-                spriteBatch.DrawString(_font, levelText,
-                    new Vector2(640 - levelSize.X / 2, 360), Color.White);
+                spriteBatch.DrawString(_font, $"Score: {_finalScore}", new Vector2(120, contentY), Color.Yellow, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, $"Coins: {_finalCoins}", new Vector2(120, contentY), Color.Gold, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, $"Enemies Defeated: {_enemiesDefeated}", new Vector2(120, contentY), Color.Red, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 
-                // Draw hint
-                string hint = "Click buttons below to continue";
-                Vector2 hintSize = _font.MeasureString(hint);
-                spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 390), Color.Gray);
+                // Footer
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
+                }
+                spriteBatch.DrawString(_font, "Click buttons below to continue",
+                    new Vector2(500, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();

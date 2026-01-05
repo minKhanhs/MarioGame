@@ -17,20 +17,41 @@ namespace MarioGame.src._Scenes
         private int _levelIndex;
         private int _finalScore;
         private int _finalCoins;
+        private int _enemiesDefeated;
         private string _deathReason;
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
 
-        public TwoPlayerGameOverScene(int levelIndex, int score, int coins, string deathReason = "Player died")
+        public TwoPlayerGameOverScene(int levelIndex, int score, int coins, int enemies = 0, string deathReason = "Player died")
         {
             _levelIndex = levelIndex;
             _finalScore = score;
             _finalCoins = coins;
+            _enemiesDefeated = enemies;
             _deathReason = deathReason;
 
-            // Update GameSession
-            GameSession.Instance.AddLevelStats(_finalScore, _finalCoins, 0, 0);
+            // Check and unlock achievements (but don't add to session yet)
+            CheckAchievements();
+        }
+
+        private void CheckAchievements()
+        {
+            // Get current session stats (before adding this level)
+            GameSession session = GameSession.Instance;
+
+            AchievementManager.Instance.CheckAndUnlockAchievements(
+                _finalCoins,           // coins this level
+                _enemiesDefeated,      // enemies this level
+                _finalScore,           // score this level
+                0,                     // level time (not available in GameOver)
+                session.TotalEnemiesDefeated,  // total enemies
+                session.TotalCoins,             // total coins
+                session.TotalScore,             // total score
+                true                            // took damage (game over = took damage)
+            );
+
+            AchievementManager.Instance.SaveAll();
         }
 
         public void LoadContent()
@@ -101,11 +122,14 @@ namespace MarioGame.src._Scenes
             if (_buttons[0].WasPressed) // Retry
             {
                 GameManager.Instance.ClearSavedGameState();
+                // Don't add to GameSession - it will reset when TwoPlayerGameplayScene loads level 1
+                // (or retry same level without resetting)
                 GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(_levelIndex));
             }
             else if (_buttons[1].WasPressed) // Main Menu
             {
                 GameManager.Instance.ClearSavedGameState();
+                // Menu will reset GameSession when player clicks "1 PLAYER" or "2 PLAYERS"
                 GameManager.Instance.ChangeScene(new MenuScene());
             }
 
@@ -149,17 +173,22 @@ namespace MarioGame.src._Scenes
                 spriteBatch.DrawString(_font, coinsText,
                     new Vector2(640 - coinsSize.X / 2, 320), Color.Gold);
 
+                string enemiesText = $"Enemies Defeated: {_enemiesDefeated}";
+                Vector2 enemiesSize = _font.MeasureString(enemiesText);
+                spriteBatch.DrawString(_font, enemiesText,
+                    new Vector2(640 - enemiesSize.X / 2, 360), Color.Lime);
+
                 // Draw level info
                 string levelText = $"Level: {_levelIndex}";
                 Vector2 levelSize = _font.MeasureString(levelText);
                 spriteBatch.DrawString(_font, levelText,
-                    new Vector2(640 - levelSize.X / 2, 360), Color.White);
+                    new Vector2(640 - levelSize.X / 2, 400), Color.White);
 
                 // Draw hint
                 string hint = "Click buttons below to continue";
                 Vector2 hintSize = _font.MeasureString(hint);
                 spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 390), Color.Gray);
+                    new Vector2(640 - hintSize.X / 2, 440), Color.Gray);
             }
 
             spriteBatch.End();

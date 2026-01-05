@@ -193,11 +193,15 @@ namespace MarioGame.src._Scenes
             if (_buttons[0].WasPressed) // 1 PLAYER
             {
                 GameManager.Instance.GameMode = 1;
+                GameSession.Instance.ResetSession(); // Reset session for new game
+                GameManager.Instance.ClearSavedGameState();
                 GameManager.Instance.ChangeScene(new GameplayScene(1));
             }
             else if (_buttons[1].WasPressed) // 2 PLAYERS
             {
                 GameManager.Instance.GameMode = 2;
+                GameSession.Instance.ResetSession(); // Reset session for new game
+                GameManager.Instance.ClearSavedGameState();
                 GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(1));
             }
             else if (_buttons[2].WasPressed) // SETTINGS

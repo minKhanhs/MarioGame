@@ -1,9 +1,9 @@
 using MarioGame.src._Core;
 using MarioGame.src._Scenes;
+using MarioGame.src._UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
 using System.Collections.Generic;
 
 namespace MarioGame._Scenes
@@ -11,147 +11,151 @@ namespace MarioGame._Scenes
     public class AboutUsScene : IScene
     {
         private SpriteFont _font;
-        private SpriteFont _smallFont;
-
-        // Team members information (you can modify this later)
-        private List<TeamMember> _teamMembers = new()
-        {
-            new TeamMember()
-            {
-                Name = "Lead Developer",
-                Role = "Game Design & Programming",
-                Description = "Responsible for overall game architecture and core mechanics implementation."
-            },
-            new TeamMember()
-            {
-                Name = "Graphics Artist",
-                Role = "Sprite & Asset Design",
-                Description = "Created all visual assets including characters, enemies, and environments."
-            },
-            new TeamMember()
-            {
-                Name = "Audio Designer",
-                Role = "Music & Sound Effects",
-                Description = "Composed background music and implemented sound effects throughout the game."
-            },
-            new TeamMember()
-            {
-                Name = "Level Designer",
-                Role = "Map Creation & Gameplay Balance",
-                Description = "Designed all game levels and balanced difficulty progression."
-            },
-            new TeamMember()
-            {
-                Name = "QA Tester",
-                Role = "Bug Testing & Feedback",
-                Description = "Thoroughly tested the game and provided valuable feedback for improvements."
-            }
-        };
+        private Button _backButton;
+        private KeyboardState _previousKeyboardState;
+        private bool _isFirstUpdate = true;
+        private bool _isContentLoaded = false;
 
         public void LoadContent()
         {
+            if (_isContentLoaded)
+                return;
+
             var content = GameManager.Instance.Content;
+
             try
             {
                 _font = content.Load<SpriteFont>("fonts/GameFont");
-                _smallFont = content.Load<SpriteFont>("fonts/GameFont");
             }
             catch
             {
                 _font = null;
-                _smallFont = null;
             }
+
+            InitializeButtons();
+            _isContentLoaded = true;
+        }
+
+        private void InitializeButtons()
+        {
+            _backButton = new Button(
+                new Rectangle(640 - 70, 680, 140, 40),
+                "BACK",
+                _font
+            )
+            {
+                BackgroundColor = new Color(230, 0, 18),
+                HoverBackgroundColor = new Color(200, 0, 10),
+                BorderColor = Color.Black,
+                TextColor = Color.White,
+                TextScale = 0.5f
+            };
         }
 
         public void Update(GameTime gameTime)
         {
-            // Press Escape to go back to menu
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape) || Keyboard.GetState().IsKeyDown(Keys.Back))
+            _backButton.Update(gameTime);
+
+            KeyboardState currentKeyboardState = Keyboard.GetState();
+
+            if (_isFirstUpdate)
+            {
+                _previousKeyboardState = currentKeyboardState;
+                _isFirstUpdate = false;
+                return;
+            }
+
+            // Back button
+            if (currentKeyboardState.IsKeyDown(Keys.Escape) || _backButton.WasPressed)
             {
                 GameManager.Instance.ChangeScene(new MenuScene());
+                return;
             }
+
+            _previousKeyboardState = currentKeyboardState;
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(18, 18, 18));
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             if (_font != null)
             {
-                // Draw title
-                string title = "ABOUT US";
-                Vector2 titleSize = _font.MeasureString(title);
-                spriteBatch.DrawString(_font, title, new Vector2(640 - titleSize.X / 2, 30), Color.Yellow);
+                // Header bar
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 0, 1280, 80), new Color(230, 0, 18));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 76, 1280, 4), Color.Black);
+                }
 
-                // Draw game info
-                string gameInfo = "Super Mario Bros Game";
-                Vector2 gameInfoSize = _font.MeasureString(gameInfo);
-                spriteBatch.DrawString(_font, gameInfo, new Vector2(640 - gameInfoSize.X / 2, 80), Color.LimeGreen);
+                // Title
+                spriteBatch.DrawString(_font, "ABOUT US", new Vector2(60, 20), Color.White, 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_font, "SUPER MARIO BROS GAME", new Vector2(60, 48), Color.White, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
 
-                string madeWith = "Built with MonoGame & .NET 8";
-                Vector2 madeWithSize = _font.MeasureString(madeWith);
-                spriteBatch.DrawString(_font, madeWith, new Vector2(640 - madeWithSize.X / 2, 110), Color.White);
+                // Content section
+                int contentY = 110;
+                int lineHeight = 30;
 
-                // Draw team section title
-                string teamTitle = "- Development Team -";
-                Vector2 teamTitleSize = _font.MeasureString(teamTitle);
-                spriteBatch.DrawString(_font, teamTitle, new Vector2(640 - teamTitleSize.X / 2, 160), Color.Cyan);
+                // Game Info
+                spriteBatch.DrawString(_font, "Game Title: Super Mario Bros Remake", new Vector2(80, contentY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, "Platform: MonoGame & .NET 8", new Vector2(80, contentY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, "Genre: Platform Adventure Game", new Vector2(80, contentY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+                contentY += lineHeight;
+                spriteBatch.DrawString(_font, "Year: 2025", new Vector2(80, contentY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 
-                // Draw team members
-                DrawTeamMembers(spriteBatch);
+                // Separator
+                contentY += 25;
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(80, contentY, 1100, 2), new Color(64, 64, 64));
+                }
 
-                // Draw credits section
-                DrawCredits(spriteBatch);
+                // Features section
+                contentY += 20;
+                spriteBatch.DrawString(_font, "Features:", new Vector2(80, contentY), new Color(230, 0, 18), 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+                contentY += 30;
 
-                // Draw footer
-                string footer = "Press ESC to go back | Special thanks to Nintendo for the original Mario Bros";
-                Vector2 footerSize = _font.MeasureString(footer);
-                spriteBatch.DrawString(_font, footer, new Vector2(640 - footerSize.X / 2, 680), Color.Gray);
+                string[] features = new[]
+                {
+                    "Classic side-scrolling platformer gameplay",
+                    "Multiple challenging levels with increasing difficulty",
+                    "Power-up system (mushrooms for size increase)",
+                    "Enemy variety with different behaviors",
+                    "Collectible coins and scoring system",
+                    "Pause and resume functionality",
+                    "Achievement tracking system",
+                    "Play history and high score records"
+                };
+
+                foreach (var feature in features)
+                {
+                    // Truncate long features to prevent overlap
+                    string displayFeature = feature.Length > 55 ? feature.Substring(0, 52) + "..." : feature;
+                    spriteBatch.DrawString(_font, "• " + displayFeature, new Vector2(100, contentY), new Color(200, 200, 200), 0f, Vector2.Zero, 0.33f, SpriteEffects.None, 0f);
+                    contentY += 26;
+                }
+
+                // Footer
+                if (Game1.WhitePixel != null)
+                {
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
+                }
+
+                spriteBatch.DrawString(_font, "Special thanks to Nintendo for the original Mario Bros inspiration",
+                    new Vector2(300, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();
-        }
 
-        private void DrawTeamMembers(SpriteBatch spriteBatch)
-        {
-            int yPos = 210;
-            int memberSpacing = 85;
-
-            for (int i = 0; i < _teamMembers.Count; i++)
-            {
-                TeamMember member = _teamMembers[i];
-
-                // Member name
-                spriteBatch.DrawString(_font, member.Name, new Vector2(100, yPos), Color.Gold);
-
-                // Role
-                spriteBatch.DrawString(_font, member.Role, new Vector2(120, yPos + 22), Color.White);
-
-                // Description
-                spriteBatch.DrawString(_font, member.Description, new Vector2(120, yPos + 40), Color.Gray);
-
-                yPos += memberSpacing;
-
-                // Stop if we're running out of space
-                if (yPos > 600) break;
-            }
-        }
-
-        private void DrawCredits(SpriteBatch spriteBatch)
-        {
-            string credits = "[2024] Your Game Studio. All rights reserved.";
-            Vector2 creditsSize = _font.MeasureString(credits);
-            spriteBatch.DrawString(_font, credits, new Vector2(640 - creditsSize.X / 2, 630), Color.DarkGray);
-        }
-
-        private class TeamMember
-        {
-            public string Name { get; set; }
-            public string Role { get; set; }
-            public string Description { get; set; }
+            // Draw back button
+            spriteBatch.Begin();
+            _backButton.Draw(spriteBatch);
+            spriteBatch.End();
         }
     }
 }

@@ -21,13 +21,22 @@ namespace MarioGame.src._Core
         public int PlayerLives { get; set; }
         public int PlayerCoins { get; set; }
         public int PlayerScore { get; set; }
+        public float PlayerScale { get; set; }
         public List<GameObj> GameObjects { get; set; }
         public bool IsValid { get; set; }
+        
+        // HUD State for pause/resume
+        public float ElapsedTime { get; set; }
+        public int EnemiesDefeated { get; set; }
+        public int MushroomsCollected { get; set; }
+        public int DeathCount { get; set; }
 
         public GameState()
         {
             IsValid = false;
             GameObjects = new List<GameObj>();
+            PlayerScale = 1.0f;
+            ElapsedTime = 0f;
         }
 
         public void Clear()

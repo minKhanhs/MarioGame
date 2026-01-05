@@ -25,6 +25,8 @@ namespace MarioGame._Scenes
         private Texture2D _backgroundTex;
         private GameHUD _hud;
         private SpriteFont _playerLabelFont;
+        private int _previousPlayer1Lives = 3;
+        private int _previousPlayer2Lives = 3;
 
         // Tr?ng thái th?ng thua
         private bool _isLevelFinished = false;
@@ -153,7 +155,7 @@ namespace MarioGame._Scenes
                     _isContentLoaded = false; // Reset flag for next level
                     System.Diagnostics.Debug.WriteLine($"[LEVEL COMPLETE] Level {_levelIndex} (2 Players)");
                     int bonusScore = _hud.CalculateLevelBonus();
-                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _player1.Score + _player2.Score, _player1.Coins + _player2.Coins, bonusScore, _hud.EnemiesDefeated));
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _hud.CurrentScore, _hud.CoinsCollected, bonusScore, _hud.EnemiesDefeated, _hud.ElapsedTime, _hud.MushroomsCollected, _hud.DeathCount));
                 }
                 return;
             }
@@ -164,6 +166,27 @@ namespace MarioGame._Scenes
             
             _player2.Update(gameTime);
             _player2.IsOnGround = false;
+
+            // Check if any player died and track death count
+            if (_player1.Lives < _previousPlayer1Lives)
+            {
+                _hud.DeathCount++;
+                _previousPlayer1Lives = _player1.Lives;
+            }
+            else if (_player1.Lives == _previousPlayer1Lives)
+            {
+                _previousPlayer1Lives = _player1.Lives;
+            }
+
+            if (_player2.Lives < _previousPlayer2Lives)
+            {
+                _hud.DeathCount++;
+                _previousPlayer2Lives = _player2.Lives;
+            }
+            else if (_player2.Lives == _previousPlayer2Lives)
+            {
+                _previousPlayer2Lives = _player2.Lives;
+            }
 
             // Check if any player died
             if (_player1.Lives <= 0 || _player1.Position.Y > 1000 || _player2.Lives <= 0 || _player2.Position.Y > 1000)
@@ -178,7 +201,7 @@ namespace MarioGame._Scenes
                 else if (_player2.Lives <= 0) deathReason = "Player 2 died";
                 else deathReason = "Player 2 fell";
                 
-                GameManager.Instance.ChangeScene(new TwoPlayerGameOverScene(_levelIndex, _player1.Score + _player2.Score, _player1.Coins + _player2.Coins, deathReason));
+                GameManager.Instance.ChangeScene(new TwoPlayerGameOverScene(_levelIndex, _hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated, deathReason));
                 return;
             }
 
@@ -202,7 +225,13 @@ namespace MarioGame._Scenes
                     if (obj is Block)
                         Collision.ResolveStaticCollision(_player1, obj);
                     else if (obj is Item item && _player1.Bounds.Intersects(item.Bounds))
+                    {
+                        if (item is Mushroom)
+                        {
+                            _hud.MushroomsCollected++;
+                        }
                         item.OnCollect(_player1);
+                    }
                     else if (obj is Enemy enemy && _player1.Bounds.Intersects(enemy.Bounds))
                     {
                         if (Collision.IsTopCollision(_player1, enemy))
@@ -219,7 +248,13 @@ namespace MarioGame._Scenes
                     if (obj is Block)
                         Collision.ResolveStaticCollision(_player2, obj);
                     else if (obj is Item item2 && _player2.Bounds.Intersects(item2.Bounds))
+                    {
+                        if (item2 is Mushroom)
+                        {
+                            _hud.MushroomsCollected++;
+                        }
                         item2.OnCollect(_player2);
+                    }
                     else if (obj is Enemy enemy2 && _player2.Bounds.Intersects(enemy2.Bounds))
                     {
                         if (Collision.IsTopCollision(_player2, enemy2))
@@ -255,9 +290,9 @@ namespace MarioGame._Scenes
             }
 
             // Update HUD with combined stats
-            _hud.LivesRemaining = System.Math.Min(_player1.Lives, _player2.Lives); // Show minimum lives
+            _hud.LivesRemaining = System.Math.Min(_player1.Lives, _player2.Lives);
             _hud.CoinsCollected = _player1.Coins + _player2.Coins;
-            _hud.CurrentScore = _player1.Score + _player2.Score;
+            // Don't override CurrentScore - let HUD calculate it based on formula
 
             // Update camera to follow average position of both players
             Vector2 avgPos = new Vector2((_player1.Position.X + _player2.Position.X) / 2, (_player1.Position.Y + _player2.Position.Y) / 2);

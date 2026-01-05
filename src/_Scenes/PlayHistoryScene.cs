@@ -7,17 +7,17 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MarioGame.src._Scenes
 {
     public class PlayHistoryScene : IScene
     {
         private SpriteFont _font;
-        private List<Button> _buttons;
+        private Button _backButton;
         private List<GameRecord> _records;
         private int _currentPage = 0;
-        private const int RECORDS_PER_PAGE = 6;
-        private int _currentFilter = 0; // 0 = All, 1 = 1-Player, 2 = 2-Player
+        private const int RECORDS_PER_PAGE = 8;
         private KeyboardState _previousKeyboardState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
@@ -39,6 +39,7 @@ namespace MarioGame.src._Scenes
             }
 
             _records = GameRecordManager.Instance.GetTopScores(100);
+            _records.Sort((a, b) => b.PlayDate.CompareTo(a.PlayDate)); // Sort by date descending
 
             InitializeButtons();
             _isContentLoaded = true;
@@ -46,62 +47,23 @@ namespace MarioGame.src._Scenes
 
         private void InitializeButtons()
         {
-            _buttons = new List<Button>();
-
-            int buttonWidth = 120;
-            int buttonHeight = 40;
-            int spacing = 10;
-
-            int centerX = 640;
-            int startX = centerX - 200;
-            int startY = 670;
-
-            // Filter buttons
-            _buttons.Add(new Button(
-                new Rectangle(startX, startY, buttonWidth, buttonHeight),
-                "ALL",
+            _backButton = new Button(
+                new Rectangle(640 - 75, 650, 150, 40),
+                "BACK",
                 _font
-            ));
-
-            _buttons.Add(new Button(
-                new Rectangle(startX + 135, startY, buttonWidth, buttonHeight),
-                "1-PLAYER",
-                _font
-            ));
-
-            _buttons.Add(new Button(
-                new Rectangle(startX + 270, startY, buttonWidth, buttonHeight),
-                "2-PLAYER",
-                _font
-            ));
-
-            // Navigation buttons
-            _buttons.Add(new Button(
-                new Rectangle(startX - 100, startY, buttonWidth - 20, buttonHeight),
-                "PREV",
-                _font
-            ));
-
-            _buttons.Add(new Button(
-                new Rectangle(startX + 410, startY, buttonWidth - 20, buttonHeight),
-                "NEXT",
-                _font
-            ));
-
-            // Main Menu button
-            _buttons.Add(new Button(
-                new Rectangle(centerX - 75, startY + 50, 150, buttonHeight),
-                "MAIN MENU",
-                _font
-            ));
+            )
+            {
+                BackgroundColor = Color.Black,
+                HoverBackgroundColor = new Color(230, 0, 18),
+                BorderColor = Color.White,
+                TextColor = Color.White,
+                TextScale = 0.4f
+            };
         }
 
         public void Update(GameTime gameTime)
         {
-            foreach (var button in _buttons)
-            {
-                button.Update(gameTime);
-            }
+            _backButton.Update(gameTime);
 
             KeyboardState currentKeyboardState = Keyboard.GetState();
 
@@ -112,46 +74,14 @@ namespace MarioGame.src._Scenes
                 return;
             }
 
-            // Filter buttons
-            if (_buttons[0].WasPressed) // ALL
-            {
-                _currentFilter = 0;
-                _currentPage = 0;
-                _records = GameRecordManager.Instance.GetTopScores(100);
-            }
-            else if (_buttons[1].WasPressed) // 1-PLAYER
-            {
-                _currentFilter = 1;
-                _currentPage = 0;
-                var sorted = GameRecordManager.Instance.Get1PlayerRecords();
-                sorted.Sort((a, b) => b.TotalScore.CompareTo(a.TotalScore));
-                _records = sorted;
-            }
-            else if (_buttons[2].WasPressed) // 2-PLAYER
-            {
-                _currentFilter = 2;
-                _currentPage = 0;
-                var sorted = GameRecordManager.Instance.Get2PlayerRecords();
-                sorted.Sort((a, b) => b.TotalScore.CompareTo(a.TotalScore));
-                _records = sorted;
-            }
-            else if (_buttons[3].WasPressed) // Previous
-            {
-                if (_currentPage > 0)
-                    _currentPage--;
-            }
-            else if (_buttons[4].WasPressed) // Next
-            {
-                int maxPages = (_records.Count + RECORDS_PER_PAGE - 1) / RECORDS_PER_PAGE;
-                if (_currentPage < maxPages - 1)
-                    _currentPage++;
-            }
-            else if (_buttons[5].WasPressed) // Main Menu
+            // Back button
+            if (currentKeyboardState.IsKeyDown(Keys.Escape) || _backButton.WasPressed)
             {
                 GameManager.Instance.ChangeScene(new MenuScene());
+                return;
             }
 
-            // Keyboard navigation
+            // Page navigation
             if (currentKeyboardState.IsKeyDown(Keys.Left) && !_previousKeyboardState.IsKeyDown(Keys.Left))
             {
                 if (_currentPage > 0) _currentPage--;
@@ -161,10 +91,6 @@ namespace MarioGame.src._Scenes
                 int maxPages = (_records.Count + RECORDS_PER_PAGE - 1) / RECORDS_PER_PAGE;
                 if (_currentPage < maxPages - 1) _currentPage++;
             }
-            else if (currentKeyboardState.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
-            {
-                GameManager.Instance.ChangeScene(new MenuScene());
-            }
 
             _previousKeyboardState = currentKeyboardState;
         }
@@ -172,119 +98,183 @@ namespace MarioGame.src._Scenes
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(32, 32, 32)); // Dark background
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
             if (_font != null)
             {
-                // Draw title
-                string title = "PLAY HISTORY - HIGH SCORES";
-                Vector2 titleSize = _font.MeasureString(title);
-                spriteBatch.DrawString(_font, title,
-                    new Vector2(640 - titleSize.X / 2, 15), Color.Gold);
+                // Title
+                spriteBatch.DrawString(_font, "PLAY HISTORY", new Vector2(60, 130), new Color(230, 150, 30), 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
+                spriteBatch.DrawString(_font, "Track your journey to rescue the princess...", new Vector2(60, 155), new Color(200, 200, 200), 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
 
-                // Draw filter info
-                string filterText = _currentFilter == 0 ? "Showing: All Records" : 
-                                   _currentFilter == 1 ? "Showing: 1-Player Only" : 
-                                   "Showing: 2-Player Only";
-                Vector2 filterSize = _font.MeasureString(filterText);
-                spriteBatch.DrawString(_font, filterText,
-                    new Vector2(640 - filterSize.X / 2, 40), Color.Cyan);
-
-                // Draw column headers with fixed widths
-                string rankHeader = "RANK";
-                string modeHeader = "MODE";
-                string nameHeader = "NAME";
-                string scoreHeader = "SCORE";
-                string levelHeader = "LVL";
-                string dateHeader = "DATE";
-
-                int col1 = 50;      // RANK
-                int col2 = 120;     // MODE
-                int col3 = 180;     // NAME
-                int col4 = 380;     // SCORE
-                int col5 = 550;     // LEVEL
-                int col6 = 650;     // DATE
-
-                int headerY = 70;
-                spriteBatch.DrawString(_font, rankHeader, new Vector2(col1, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, modeHeader, new Vector2(col2, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, nameHeader, new Vector2(col3, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, scoreHeader, new Vector2(col4, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, levelHeader, new Vector2(col5, headerY), Color.Cyan);
-                spriteBatch.DrawString(_font, dateHeader, new Vector2(col6, headerY), Color.Cyan);
-
-                // Draw separator
+                // Separator
                 if (Game1.WhitePixel != null)
                 {
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(50, 100, 900, 2), Color.Cyan);
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, 175, 1160, 2), new Color(200, 200, 200));
                 }
 
-                // Draw records for current page
-                int startIndex = _currentPage * RECORDS_PER_PAGE;
-                int endIndex = System.Math.Min(startIndex + RECORDS_PER_PAGE, _records.Count);
+                // Draw stat cards
+                DrawStatCards(spriteBatch);
 
-                int displayY = 125;
+                // Draw records table
+                DrawRecordsTable(spriteBatch);
+
+                // Draw pagination
+                DrawPagination(spriteBatch);
+
+                // Draw hint
+                spriteBatch.DrawString(_font, "LEFT/RIGHT: Navigate Pages  |  ESC: Back",
+                    new Vector2(400, 685), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+            }
+
+            spriteBatch.End();
+
+            // Draw back button
+            spriteBatch.Begin();
+            _backButton.Draw(spriteBatch);
+            spriteBatch.End();
+        }
+
+        private void DrawStatCards(SpriteBatch spriteBatch)
+        {
+            int cardY = 195;
+            int cardWidth = 360;
+            int cardHeight = 90;
+            int spacing = 30;
+
+            // Get stats from GameSession
+            var gameSession = GameSession.Instance;
+            int totalPlays = _records.Count;
+            int highScore = _records.Count > 0 ? _records.Max(r => r.TotalScore) : 0;
+
+            // Card 1: Total Plays
+            DrawStatCard(spriteBatch, 60, cardY, cardWidth, cardHeight, "TOTAL PLAYS", totalPlays.ToString("D3"));
+
+            // Card 2: High Score
+            DrawStatCard(spriteBatch, 60 + cardWidth + spacing, cardY, cardWidth, cardHeight, "HIGH SCORE", highScore.ToString());
+
+            // Card 3: Total Coins (from achievements display)
+            int totalCoins = gameSession?.TotalCoins ?? 0;
+            DrawStatCard(spriteBatch, 60 + (cardWidth + spacing) * 2, cardY, cardWidth, cardHeight, "TOTAL COINS", totalCoins.ToString());
+        }
+
+        private void DrawStatCard(SpriteBatch spriteBatch, int x, int y, int width, int height, string label, string value)
+        {
+            if (Game1.WhitePixel == null) return;
+
+            // Card background
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, width, height), new Color(0, 0, 0));
+
+            // Card border
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, width, 3), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y + height - 3, width, 3), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, 3, height), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + width - 3, y, 3, height), Color.White);
+
+            // Label
+            spriteBatch.DrawString(_font, label, new Vector2(x + 15, y + 15), new Color(150, 150, 150), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+
+            // Value
+            spriteBatch.DrawString(_font, value, new Vector2(x + 15, y + 45), Color.White, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
+        }
+
+        private void DrawRecordsTable(SpriteBatch spriteBatch)
+        {
+            int tableY = 310;
+            int tableWidth = 1160;
+            int tableHeight = 350;
+
+            if (Game1.WhitePixel == null) return;
+
+            // Table background
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY, tableWidth, tableHeight), new Color(0, 0, 0));
+
+            // Table border
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY, tableWidth, 3), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY + tableHeight - 3, tableWidth, 3), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY, 3, tableHeight), Color.White);
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60 + tableWidth - 3, tableY, 3, tableHeight), Color.White);
+
+            // Header row
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY, tableWidth, 35), Color.White);
+            spriteBatch.DrawString(_font, "DATE/TIME", new Vector2(80, tableY + 8), Color.Black, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "PLAYER", new Vector2(320, tableY + 8), Color.Black, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "SCORE", new Vector2(550, tableY + 8), Color.Black, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "DURATION", new Vector2(750, tableY + 8), Color.Black, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "MODE", new Vector2(1000, tableY + 8), Color.Black, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+
+            // Separator
+            spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, tableY + 35, tableWidth, 2), new Color(64, 64, 64));
+
+            // Draw records
+            int startIndex = _currentPage * RECORDS_PER_PAGE;
+            int endIndex = System.Math.Min(startIndex + RECORDS_PER_PAGE, _records.Count);
+
+            int rowY = tableY + 40;
+            int rowHeight = 35;
+
+            if (_records.Count == 0)
+            {
+                spriteBatch.DrawString(_font, "No play history yet. Start playing!", new Vector2(450, rowY + 50), new Color(150, 150, 150), 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+            }
+            else
+            {
                 for (int i = startIndex; i < endIndex; i++)
                 {
                     GameRecord record = _records[i];
-                    int rank = i + 1;
+                    bool isHighScore = record.TotalScore == _records.Max(r => r.TotalScore);
 
-                    // Alternate colors for readability
-                    Color color = (i % 2 == 0) ? Color.White : Color.LightGray;
+                    // Highlight high score row
+                    if (isHighScore)
+                    {
+                        spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, rowY, tableWidth, rowHeight), new Color(230, 0, 18) * 0.3f);
+                    }
 
-                    // Draw each column
-                    string rankStr = rank.ToString("D2");
-                    string modeStr = record.GameMode == 2 ? "2P" : "1P";
-                    string nameStr = record.PlayerName.Length > 15 ? record.PlayerName.Substring(0, 15) : record.PlayerName;
+                    // Separator line
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(60, rowY + rowHeight, tableWidth, 1), new Color(64, 64, 64));
+
+                    // Row data
+                    string dateStr = record.PlayDate.ToString("MMM dd, yyyy HH:mm");
+                    string playerStr = string.IsNullOrEmpty(record.PlayerName) ? "Anonymous" : record.PlayerName;
                     string scoreStr = record.TotalScore.ToString();
-                    string levelStr = record.MaxLevel.ToString();
-                    string dateStr = record.PlayDate.ToString("MM/dd");
+                    string durationStr = record.GetFormattedDuration();
+                    string modeStr = record.GameMode == 2 ? "2P" : "1P";
 
-                    spriteBatch.DrawString(_font, rankStr, new Vector2(col1, displayY), color);
-                    spriteBatch.DrawString(_font, modeStr, new Vector2(col2, displayY), record.GameMode == 2 ? Color.Magenta : Color.LimeGreen);
-                    spriteBatch.DrawString(_font, nameStr, new Vector2(col3, displayY), color);
-                    spriteBatch.DrawString(_font, scoreStr, new Vector2(col4, displayY), Color.Yellow);
-                    spriteBatch.DrawString(_font, levelStr, new Vector2(col5, displayY), Color.Cyan);
-                    spriteBatch.DrawString(_font, dateStr, new Vector2(col6, displayY), Color.Gray);
+                    Color textColor = isHighScore ? new Color(230, 0, 18) : Color.White;
+                    Color scoreColor = isHighScore ? new Color(230, 150, 30) : new Color(200, 200, 0);
 
-                    displayY += 40;
-                }
+                    spriteBatch.DrawString(_font, dateStr, new Vector2(80, rowY + 8), textColor, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                    spriteBatch.DrawString(_font, playerStr, new Vector2(320, rowY + 8), textColor, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                    spriteBatch.DrawString(_font, scoreStr, new Vector2(550, rowY + 8), scoreColor, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                    spriteBatch.DrawString(_font, durationStr, new Vector2(750, rowY + 8), textColor, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+                    spriteBatch.DrawString(_font, modeStr, new Vector2(1000, rowY + 8), textColor, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
 
-                // Draw page info
-                int maxPages = (_records.Count + RECORDS_PER_PAGE - 1) / RECORDS_PER_PAGE;
-                int totalRecords = _records.Count;
-                string pageInfo = $"Page {_currentPage + 1}/{System.Math.Max(1, maxPages)} | Total Records: {totalRecords}";
-                Vector2 pageInfoSize = _font.MeasureString(pageInfo);
-                spriteBatch.DrawString(_font, pageInfo,
-                    new Vector2(640 - pageInfoSize.X / 2, 600), Color.Gray);
-
-                // Draw hint
-                string hint = "Use filter buttons or LEFT/RIGHT arrows | ESC to go back";
-                Vector2 hintSize = _font.MeasureString(hint);
-                spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 620), Color.DarkGray);
-
-                // No records message
-                if (_records.Count == 0)
-                {
-                    string noRecords = "No records yet. Play a game to add a record!";
-                    Vector2 noRecordsSize = _font.MeasureString(noRecords);
-                    spriteBatch.DrawString(_font, noRecords,
-                        new Vector2(640 - noRecordsSize.X / 2, 300), Color.Red);
+                    rowY += rowHeight;
                 }
             }
+        }
 
-            spriteBatch.End();
+        private void DrawPagination(SpriteBatch spriteBatch)
+        {
+            int maxPages = (_records.Count + RECORDS_PER_PAGE - 1) / RECORDS_PER_PAGE;
+            if (maxPages == 0) maxPages = 1;
 
-            // Draw buttons
-            spriteBatch.Begin();
-            foreach (var button in _buttons)
+            int paginationY = 670;
+
+            // Page info
+            spriteBatch.DrawString(_font, $"PAGE {_currentPage + 1} / {maxPages}", new Vector2(60, paginationY), new Color(150, 150, 150), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+
+            // Navigation text
+            if (_currentPage > 0)
             {
-                button.Draw(spriteBatch);
+                spriteBatch.DrawString(_font, "< PREV", new Vector2(400, paginationY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
             }
-            spriteBatch.End();
+
+            if (_currentPage < maxPages - 1)
+            {
+                spriteBatch.DrawString(_font, "NEXT >", new Vector2(1100, paginationY), Color.White, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            }
         }
     }
 }
