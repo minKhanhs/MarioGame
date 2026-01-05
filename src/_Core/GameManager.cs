@@ -1,5 +1,5 @@
-﻿using MarioGame.src._Scenes;
-using MarioGame.src._Entities.Base;
+﻿using MarioGame.src._Entities.Base;
+using MarioGame.src._Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

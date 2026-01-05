@@ -11,12 +11,16 @@ namespace MarioGame.src._UI
         public Color TextColor { get; set; }
         public Color BorderColor { get; set; }
         public Color HoverColor { get; set; }
+        public Color BackgroundColor { get; set; }
+        public Color HoverBackgroundColor { get; set; }
         public SpriteFont Font { get; set; }
+        public float TextScale { get; set; } = 1.0f; // Add text scale property
         public bool IsHovered { get; set; }
         public bool WasPressed { get; set; }
 
         private MouseState _previousMouseState;
-        private const int BorderWidth = 2;
+        private const int BorderWidth = 4;
+        private const int ShadowOffset = 4;
 
         public Button(Rectangle bounds, string text, SpriteFont font)
         {
@@ -26,6 +30,8 @@ namespace MarioGame.src._UI
             TextColor = Color.White;
             BorderColor = Color.White;
             HoverColor = Color.Yellow;
+            BackgroundColor = new Color(32, 32, 32); // #202020
+            HoverBackgroundColor = Color.Yellow;
             IsHovered = false;
             WasPressed = false;
         }
@@ -51,22 +57,40 @@ namespace MarioGame.src._UI
             if (Game1.WhitePixel == null)
                 return;
 
+            // Draw shadow (retro style offset)
+            if (!IsHovered)
+            {
+                spriteBatch.Draw(
+                    Game1.WhitePixel,
+                    new Rectangle(Bounds.X + ShadowOffset, Bounds.Y + ShadowOffset, Bounds.Width, Bounds.Height),
+                    Color.Black * 0.5f
+                );
+            }
+
+            // Draw background
+            Color bgColor = IsHovered ? HoverBackgroundColor : BackgroundColor;
+            spriteBatch.Draw(
+                Game1.WhitePixel,
+                Bounds,
+                bgColor
+            );
+
             // Draw border with hover color
-            Color borderColor = IsHovered ? HoverColor : BorderColor;
+            Color borderColor = IsHovered ? Color.White : BorderColor;
             DrawRectangleOutline(spriteBatch, Bounds, borderColor, BorderWidth);
 
-            // Draw text centered in button
+            // Draw text centered in button with scale support
             if (Font != null)
             {
-                Vector2 textSize = Font.MeasureString(Text);
+                Vector2 textSize = Font.MeasureString(Text) * TextScale;
                 Vector2 textPosition = new Vector2(
                     Bounds.Center.X - textSize.X / 2,
                     Bounds.Center.Y - textSize.Y / 2
                 );
 
                 // Change text color on hover
-                Color currentTextColor = IsHovered ? Color.Yellow : TextColor;
-                spriteBatch.DrawString(Font, Text, textPosition, currentTextColor);
+                Color currentTextColor = IsHovered ? Color.Black : TextColor;
+                spriteBatch.DrawString(Font, Text, textPosition, currentTextColor, 0f, Vector2.Zero, TextScale, SpriteEffects.None, 0f);
             }
         }
 

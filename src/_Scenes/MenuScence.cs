@@ -1,5 +1,6 @@
 ﻿using MarioGame._Scenes;
 using MarioGame.src._Core;
+using MarioGame.src._Scenes;
 using MarioGame.src._UI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -33,14 +34,21 @@ namespace MarioGame.src._Scenes
                 _buttonFont = null;
             }
 
-            // Load background if available
+            // Load background if available - use backgroundMenu
             try
             {
-                _backgroundTex = content.Load<Texture2D>("sprites/background");
+                _backgroundTex = content.Load<Texture2D>("sprites/backgroundMenu");
             }
             catch
             {
-                _backgroundTex = null;
+                try
+                {
+                    _backgroundTex = content.Load<Texture2D>("sprites/background");
+                }
+                catch
+                {
+                    _backgroundTex = null;
+                }
             }
 
             InitializeButtons();
@@ -50,78 +58,127 @@ namespace MarioGame.src._Scenes
         {
             _buttons = new List<Button>();
 
-            // Button dimensions - slightly smaller to fit 4 rows
-            int buttonWidth = 230;
-            int buttonHeight = 40;
-            int spacing = 12;
-            int hSpacing = 250; // Horizontal spacing for 2 columns
+            // Button dimensions - retro style with larger buttons
+            int buttonWidth = 280;
+            int buttonHeight = 60;
+            int spacing = 20;
+            int hSpacing = 320; // Horizontal spacing for 2 columns
 
-            // Center position for 2x4 grid
+            // Center position for 2x4 grid (matching original layout)
             int centerX = 640;
-            int startX = centerX - hSpacing / 2;
-            int startY = 300;
+            int startX = centerX - hSpacing / 2 - buttonWidth / 2;
+            int startY = 200;
 
             // Row 1: 1 Player, 2 Players
             _buttons.Add(new Button(
                 new Rectangle(startX, startY, buttonWidth, buttonHeight),
                 "1 PLAYER",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),      // #202020 surface
+                HoverBackgroundColor = new Color(230, 0, 18), // #E60012 primary red
+                BorderColor = new Color(240, 240, 240)        // #F0F0F0 border-light
+            });
 
             _buttons.Add(new Button(
                 new Rectangle(startX + hSpacing, startY, buttonWidth, buttonHeight),
                 "2 PLAYERS",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(67, 176, 71), // #43B047 secondary green
+                BorderColor = new Color(240, 240, 240)
+            });
 
             // Row 2: Settings, Achievements
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + (buttonHeight + spacing) * 1, buttonWidth, buttonHeight),
                 "SETTINGS",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = Color.White,
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
             _buttons.Add(new Button(
                 new Rectangle(startX + hSpacing, startY + (buttonHeight + spacing) * 1, buttonWidth, buttonHeight),
                 "ACHIEVEMENTS",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(251, 208, 0), // #FBD000 accent yellow
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
-            // Row 3: About Us, Compendium
+            // Row 3: Play History, Compendium
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight),
-                "ABOUT US",
+                "PLAY HISTORY",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(156, 39, 176), // Purple
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
             _buttons.Add(new Button(
                 new Rectangle(startX + hSpacing, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight),
                 "COMPENDIUM",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(180, 100, 180), // Purple/Magenta
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
-            // Row 4: Play History, Credits
+            // Row 4: About Us, Credits
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + (buttonHeight + spacing) * 3, buttonWidth, buttonHeight),
-                "PLAY HISTORY",
+                "ABOUT US",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(6, 147, 227),  // Sky blue
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
             _buttons.Add(new Button(
                 new Rectangle(startX + hSpacing, startY + (buttonHeight + spacing) * 3, buttonWidth, buttonHeight),
                 "CREDITS",
                 _buttonFont
-            ));
+            )
+            {
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(100, 150, 200), // Light blue
+                BorderColor = new Color(240, 240, 240),
+                TextColor = Color.White
+            });
 
-            // Help button (question mark) - top right corner
+            // Help button (question mark) - top right corner with bounce animation
             _helpButton = new Button(
-                new Rectangle(1280 - 60, 20, 40, 40),
+                new Rectangle(1280 - 80, 20, 60, 60),
                 "?",
                 _buttonFont
-            );
-            _helpButton.TextColor = Color.Gold;
-            _helpButton.BorderColor = Color.Gold;
-            _helpButton.HoverColor = Color.Yellow;
+            )
+            {
+                BackgroundColor = new Color(251, 208, 0),       // #FBD000 accent yellow
+                HoverBackgroundColor = new Color(251, 208, 0),
+                BorderColor = Color.Black,
+                TextColor = Color.Black
+            };
         }
 
         public void Update(GameTime gameTime)
@@ -151,17 +208,17 @@ namespace MarioGame.src._Scenes
             {
                 GameManager.Instance.ChangeScene(new AchievementScene());
             }
-            else if (_buttons[4].WasPressed) // ABOUT US
+            else if (_buttons[4].WasPressed) // PLAY HISTORY
             {
-                GameManager.Instance.ChangeScene(new AboutUsScene());
+                GameManager.Instance.ChangeScene(new PlayHistoryScene());
             }
             else if (_buttons[5].WasPressed) // COMPENDIUM
             {
                 GameManager.Instance.ChangeScene(new CompendiumScene());
             }
-            else if (_buttons[6].WasPressed) // PLAY HISTORY
+            else if (_buttons[6].WasPressed) // ABOUT US
             {
-                GameManager.Instance.ChangeScene(new PlayHistoryScene());
+                GameManager.Instance.ChangeScene(new AboutUsScene());
             }
             else if (_buttons[7].WasPressed) // CREDITS
             {
@@ -176,14 +233,14 @@ namespace MarioGame.src._Scenes
         public void Draw(SpriteBatch spriteBatch)
         {
             var device = GameManager.Instance.GraphicsDevice;
-            device.Clear(Color.Black);
+            device.Clear(new Color(16, 16, 16)); // #101010 dark background
 
             spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-            // Draw background if available
+            // Draw background if available (with reduced opacity for overlay effect)
             if (_backgroundTex != null)
             {
-                spriteBatch.Draw(_backgroundTex, new Rectangle(0, 0, 1280, 720), Color.White);
+                spriteBatch.Draw(_backgroundTex, new Rectangle(0, 0, 1280, 720), Color.White * 0.3f);
             }
 
             // Draw title "SUPER MARIO BROS"
@@ -198,7 +255,7 @@ namespace MarioGame.src._Scenes
                 button.Draw(spriteBatch);
             }
 
-            // Draw help button
+            // Draw help button with custom styling
             _helpButton.Draw(spriteBatch);
 
             spriteBatch.End();
@@ -206,11 +263,11 @@ namespace MarioGame.src._Scenes
 
         private void DrawTitle(SpriteBatch spriteBatch)
         {
-            // SUPER text (white, smaller)
+            // SUPER text (white)
             string superText = "SUPER";
             Vector2 superSize = _titleFont.MeasureString(superText);
             spriteBatch.DrawString(_titleFont, superText,
-                new Vector2(640 - superSize.X / 2, 80), Color.White);
+                new Vector2(640 - superSize.X / 2, 50), Color.White, 0f, Vector2.Zero, 1.5f, SpriteEffects.None, 0f);
 
             // MARIO BROS line (red MARIO + white BROS)
             string marioText = "MARIO";
@@ -218,16 +275,16 @@ namespace MarioGame.src._Scenes
             Vector2 marioSize = _titleFont.MeasureString(marioText);
             Vector2 brosSize = _titleFont.MeasureString(brosText);
 
-            float totalWidth = marioSize.X + 30 + brosSize.X; // 30px gap
+            float totalWidth = (marioSize.X + 30 + brosSize.X) * 1.3f;
             float startX = 640 - totalWidth / 2;
 
-            // MARIO in red (slightly larger)
+            // MARIO in red
             spriteBatch.DrawString(_titleFont, marioText,
-                new Vector2(startX, 135), Color.Red, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+                new Vector2(startX, 120), new Color(230, 0, 18), 0f, Vector2.Zero, 1.3f, SpriteEffects.None, 0f);
 
-            // BROS in white (same size as MARIO)
+            // BROS in white
             spriteBatch.DrawString(_titleFont, brosText,
-                new Vector2(startX + (marioSize.X + 30) * 1.2f, 135), Color.White, 0f, Vector2.Zero, 1.2f, SpriteEffects.None, 0f);
+                new Vector2(startX + (marioSize.X + 30) * 1.3f, 120), Color.White, 0f, Vector2.Zero, 1.3f, SpriteEffects.None, 0f);
         }
     }
 }
