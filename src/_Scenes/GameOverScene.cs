@@ -185,8 +185,6 @@ namespace MarioGame.src._Scenes
                 {
                     spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, 645, 1280, 2), Color.Black);
                 }
-                spriteBatch.DrawString(_font, "Click buttons below to continue",
-                    new Vector2(500, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
             spriteBatch.End();

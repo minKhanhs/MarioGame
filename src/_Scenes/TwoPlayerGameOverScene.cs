@@ -183,12 +183,6 @@ namespace MarioGame.src._Scenes
                 Vector2 levelSize = _font.MeasureString(levelText);
                 spriteBatch.DrawString(_font, levelText,
                     new Vector2(640 - levelSize.X / 2, 400), Color.White);
-
-                // Draw hint
-                string hint = "Click buttons below to continue";
-                Vector2 hintSize = _font.MeasureString(hint);
-                spriteBatch.DrawString(_font, hint,
-                    new Vector2(640 - hintSize.X / 2, 440), Color.Gray);
             }
 
             spriteBatch.End();
