@@ -1,17 +1,18 @@
-﻿using MarioGame.src._Entities.Base;
+﻿using MarioGame.src._Core;
+using MarioGame.src._Core.Camera;
+using MarioGame.src._Data;
+using MarioGame.src._Entities.Base;
 using MarioGame.src._Entities.enemies;
 using MarioGame.src._Entities.Enviroments;
 using MarioGame.src._Entities.items;
-using MarioGame.src._Entities.player.states;
-using MarioGame.src._Core;
-using MarioGame.src._Core.Camera;
-using MarioGame.src._Data;
 using MarioGame.src._Entities.player;
+using MarioGame.src._Entities.player.states;
 using MarioGame.src._Scenes;
 using MarioGame.src._Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace MarioGame._Scenes
@@ -38,6 +39,10 @@ namespace MarioGame._Scenes
         // Kiểm tra xem đã load content chưa
         private bool _isContentLoaded = false;
 
+
+        private float _bulletSpawnTimer = 0f;
+        private float _bulletSpawnInterval = 5.0f; // Cứ 5 giây bắn 1 quả (bạn có thể chỉnh)
+        private Random _random = new Random();
         public GameplayScene(int levelIndex)
         {
             _levelIndex = levelIndex;
@@ -81,6 +86,10 @@ namespace MarioGame._Scenes
             textures.Add("coin", content.Load<Texture2D>("sprites/coin"));
             textures.Add("goomba", content.Load<Texture2D>("sprites/goomba"));
             textures.Add("mushroom", content.Load<Texture2D>("sprites/mushroom"));
+            textures.Add("pipe", content.Load<Texture2D>("sprites/pipe"));
+            textures.Add("plant", content.Load<Texture2D>("sprites/plant"));
+            textures.Add("koopa", content.Load<Texture2D>("sprites/koopa"));
+            textures.Add("bullet", content.Load<Texture2D>("sprites/bullet"));
 
             MapLoader.Initialize(textures);
 
@@ -176,6 +185,20 @@ namespace MarioGame._Scenes
                 return;
             }
 
+            if (_player.Position.X > 2
+        && MapLoader.CurrentLevelConfig != null
+        && MapLoader.CurrentLevelConfig.HasBulletBill) // <--- KIỂM TRA TẠI ĐÂY
+            {
+                _bulletSpawnTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                if (_bulletSpawnTimer > _bulletSpawnInterval)
+                {
+                    _bulletSpawnTimer = 0f;
+                    SpawnBulletBill();
+                    _bulletSpawnInterval = _random.Next(3, 7);
+                }
+            }
+
             KeyboardState currentKbState = Keyboard.GetState();
 
             // Check for pause input (ESC key)
@@ -242,17 +265,25 @@ namespace MarioGame._Scenes
                 obj.Update(gameTime);
 
                 // Enemy collision with blocks
-                if (obj is MovableObj movableObj && !(obj is Player))
+                if (obj is MovableObj movableObj && !(obj is Player) && !(obj is PiranhaPlant) && !(obj is BulletBill))
                 {
                     foreach (var other in _gameObjects)
-                        if (other is Block && other != obj)
-                            Collision.ResolveStaticCollision(movableObj, other);
+                    {
+                        // QUAN TRỌNG: Kiểm tra va chạm với cả Block và Pipe
+                        if (other != obj)
+                        {
+                            if (other is Block || other is Pipe)
+                            {
+                                Collision.ResolveStaticCollision(movableObj, other);
+                            }
+                        }
+                    }
                 }
 
                 if (obj.IsActive)
                 {
                     // Player collision with blocks
-                    if (obj is Block)
+                    if (obj is Block || obj is Pipe)
                         Collision.ResolveStaticCollision(_player, obj);
                     // Item collection
                     else if (obj is Item item && _player.Bounds.Intersects(item.Bounds))
@@ -266,14 +297,19 @@ namespace MarioGame._Scenes
                     // Enemy interaction
                     else if (obj is Enemy enemy && _player.Bounds.Intersects(enemy.Bounds))
                     {
-                        if (Collision.IsTopCollision(_player, enemy))
+                        if (enemy is PiranhaPlant)
                         {
-                            enemy.OnStomped();
+                            _player.TakeDamage();
+                        }
+                        else if (Collision.IsTopCollision(_player, enemy))
+                        {
+                            enemy.OnStomped(); // Goomba thì chết
                             _player.Velocity.Y = -5f;
-                            _hud.EnemiesDefeated++; // Track enemy defeat
                         }
                         else
+                        {
                             _player.TakeDamage();
+                        }
                     }
                     // Level completion
                     else if (obj is Castle && _player.Bounds.Intersects(obj.Bounds))
@@ -346,6 +382,27 @@ namespace MarioGame._Scenes
 
             GameManager.Instance.SaveGameState(state);
             GameManager.Instance.ChangeScene(new PauseScene(_levelIndex));
+        }
+        private void SpawnBulletBill()
+        {
+            var content = GameManager.Instance.Content;
+            var device = GameManager.Instance.GraphicsDevice;
+
+            // Load lại texture từ Content (hoặc lấy từ Dictionary textures nếu bạn lưu global)
+            // Tốt nhất là lưu texture vào biến _bulletTex trong LoadContent để dùng lại cho đỡ lag
+            Texture2D bulletTex = content.Load<Texture2D>("sprites/bullet");
+
+            // Tạo đối tượng Bullet Bill mới
+            BulletBill bill = new BulletBill(bulletTex, _camera, device);
+
+            // Tính độ cao ngẫu nhiên (tránh quá thấp hoặc quá cao)
+            // Map cao 736. Random từ 300 đến 600.
+            float randomY = _random.Next(450, 650);
+
+            bill.Spawn(randomY);
+
+            // Thêm vào danh sách GameObjects
+            _gameObjects.Add(bill);
         }
     }
 }

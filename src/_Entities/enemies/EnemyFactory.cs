@@ -20,12 +20,13 @@ namespace MarioGame.src._Entities.enemies
                     break;
 
                 case 'K': // Koopa (Ví dụ sau này bạn thêm rùa)
-                    // if (textures.ContainsKey("koopa"))
-                    //    return new Koopa(textures["koopa"], position);
+                    if (textures.ContainsKey("koopa")) // Key texture phải là "koopa"
+                        return new Koopa(textures["koopa"], position);
                     break;
 
                 case 'P': // Piranha Plant (Cây ăn thịt)
-                    // return new PiranhaPlant(textures["plant"], position);
+                    if (textures.ContainsKey("plant")) // Key texture phải là "plant"
+                        return new PiranhaPlant(textures["plant"], position);
                     break;
 
                 default:

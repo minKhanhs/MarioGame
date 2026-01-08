@@ -19,7 +19,7 @@ namespace MarioGame.src._Data
     {
         // Dictionary lưu trữ Texture để không phải load lại nhiều lần
         private static Dictionary<string, Texture2D> _textureMap;
-
+        public static LevelMapData CurrentLevelConfig { get; private set; }
         public static void Initialize(Dictionary<string, Texture2D> textures)
         {
             _textureMap = textures;
@@ -29,6 +29,7 @@ namespace MarioGame.src._Data
         {
             List<GameObj> gameObjects = new List<GameObj>();
 
+
             if (!File.Exists(filePath))
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Map file not found: {filePath}");
@@ -36,7 +37,6 @@ namespace MarioGame.src._Data
             }
 
             string jsonContent = File.ReadAllText(filePath);
-            
             if (string.IsNullOrWhiteSpace(jsonContent))
             {
                 System.Diagnostics.Debug.WriteLine($"[ERROR] Map file is empty: {filePath}");
@@ -44,7 +44,7 @@ namespace MarioGame.src._Data
             }
 
             var mapData = JsonSerializer.Deserialize<LevelMapData>(jsonContent);
-
+            CurrentLevelConfig = mapData;
             // Check if deserialization failed
             if (mapData == null || mapData.Layout == null || mapData.Layout.Count == 0)
             {
@@ -86,6 +86,7 @@ namespace MarioGame.src._Data
             {
                 // Môi trường
                 case '#': return new Block(_textureMap["brick"], pos);
+                case 'T': return new Pipe(_textureMap["pipe"], pos);
                 case 'G': return new Block(_textureMap["ground"], pos);
 
                 // Vật phẩm

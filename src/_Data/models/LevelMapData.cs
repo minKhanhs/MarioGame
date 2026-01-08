@@ -14,5 +14,6 @@ namespace MarioGame.src._Data.models
         public int Height { get; set; }
         public int TileSize { get; set; } // Kích thước 1 ô (thường là 32 hoặc 16)
         public List<string> Layout { get; set; } // Mảng các chuỗi ký tự biểu diễn bản đồ
+        public bool HasBulletBill { get; set; } = false;
     }
 }
