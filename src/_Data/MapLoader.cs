@@ -92,7 +92,7 @@ namespace MarioGame.src._Data
                 // Vật phẩm
                 case 'C': return new Coin(_textureMap["coin"], pos);
                 case 'M': return new Mushroom(_textureMap["mushroom"], pos);
-
+                case '?': return new MysteryBlock(_textureMap["mystery"], pos);
                 // Kẻ thù
                 case 'E':
                 case 'K': // Nếu map có Koopa

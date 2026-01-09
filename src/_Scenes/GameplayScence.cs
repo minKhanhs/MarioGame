@@ -7,6 +7,7 @@ using MarioGame.src._Entities.Enviroments;
 using MarioGame.src._Entities.items;
 using MarioGame.src._Entities.player;
 using MarioGame.src._Entities.player.states;
+using MarioGame.src._Input;
 using MarioGame.src._Scenes;
 using MarioGame.src._Utils;
 using Microsoft.Xna.Framework;
@@ -26,6 +27,8 @@ namespace MarioGame._Scenes
         private Texture2D _backgroundTex;
         private GameHUD _hud;
         private int _previousPlayerLives = 3; // Track previous frame's lives to detect death
+        private Texture2D _fireballTexture; // Biến lưu ảnh viên đạn
+        private float _shootCooldown = 0f;
 
         // Trạng thái thắng thua
         private bool _isLevelFinished = false;
@@ -59,6 +62,7 @@ namespace MarioGame._Scenes
 
             _camera = new Camera(device.Viewport);
             _backgroundTex = content.Load<Texture2D>("sprites/background");
+            _fireballTexture = content.Load<Texture2D>("sprites/fireball");
 
             // Load HUD font
             SpriteFont hudFont = null;
@@ -90,6 +94,7 @@ namespace MarioGame._Scenes
             textures.Add("plant", content.Load<Texture2D>("sprites/plant"));
             textures.Add("koopa", content.Load<Texture2D>("sprites/koopa"));
             textures.Add("bullet", content.Load<Texture2D>("sprites/bullet"));
+            textures.Add("mystery", content.Load<Texture2D>("sprites/present"));
 
             MapLoader.Initialize(textures);
 
@@ -201,6 +206,18 @@ namespace MarioGame._Scenes
 
             KeyboardState currentKbState = Keyboard.GetState();
 
+            // --- XỬ LÝ BẮN ĐẠN (Phím F) ---
+            _shootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            Keys attackKey = InputSettings.Instance.P1_KeyMap[EGameAction.Attack];
+            if (currentKbState.IsKeyDown(attackKey) && _shootCooldown <= 0)
+            {
+                if (MapLoader.CurrentLevelConfig != null && MapLoader.CurrentLevelConfig.CanShoot)
+                {
+                    _shootCooldown = 0.5f;
+                    ShootFireball();
+                }
+            }
+
             // Check for pause input (ESC key)
             if (currentKbState.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
             {
@@ -265,7 +282,7 @@ namespace MarioGame._Scenes
                 obj.Update(gameTime);
 
                 // Enemy collision with blocks
-                if (obj is MovableObj movableObj && !(obj is Player) && !(obj is PiranhaPlant) && !(obj is BulletBill))
+                if (obj is MovableObj movableObj && !(obj is Player) && !(obj is PiranhaPlant) && !(obj is BulletBill) && !(obj is Fireball))
                 {
                     foreach (var other in _gameObjects)
                     {
@@ -282,8 +299,69 @@ namespace MarioGame._Scenes
 
                 if (obj.IsActive)
                 {
+                    // CHECK VA CHẠM VỚI MYSTERY BLOCK
+                    if (obj is MysteryBlock mysteryBlock)
+                    {
+                        // Kiểm tra va chạm thông thường để chặn Mario lại
+                        if (_player.Bounds.Intersects(mysteryBlock.Bounds))
+                        {
+                            // Logic xác định va chạm ĐÁY (Mario đụng đầu vào block)
+                            // 1. Mario đang bay lên (Velocity.Y < 0)
+                            // 2. Đầu Mario nằm dưới Đáy Block một chút
+                            bool isHeadHit = _player.Velocity.Y < 0 &&
+                                             _player.Bounds.Top > mysteryBlock.Bounds.Bottom - 10;
+
+                            if (isHeadHit)
+                            {
+                                // Mario dừng lại và nảy xuống nhẹ
+                                _player.Velocity.Y = 0;
+
+                                // --- GỌI HÀM SINH VẬT PHẨM ---
+                                // Cần lấy texture Coin và Mushroom từ Dictionary textures gốc 
+                                // (hoặc load lại từ Content nếu bạn lười truyền biến)
+                                var content = GameManager.Instance.Content;
+                                Texture2D coinTex = content.Load<Texture2D>("sprites/coin");
+                                Texture2D mushTex = content.Load<Texture2D>("sprites/mushroom");
+
+                                Item spawnedItem = mysteryBlock.SpawnItem(coinTex, mushTex);
+
+                                // Nếu sinh ra vật phẩm thành công -> Thêm vào list game để nó hoạt động
+                                if (spawnedItem != null)
+                                {
+                                    // Thêm vào cuối danh sách (An toàn vì vòng lặp chạy ngược i--)
+                                    _gameObjects.Add(spawnedItem);
+
+                                    // (Tùy chọn) PlaySound("bump");
+                                }
+                            }
+
+                            // Vẫn phải gọi hàm này để đẩy Mario ra khỏi block (xử lý vật lý cứng)
+                            Collision.ResolveStaticCollision(_player, obj);
+                        }
+                    }
+                    else if (obj is Fireball fireball)
+                    {
+                        foreach (var target in _gameObjects)
+                        {
+                            if (target != fireball && target.IsActive)
+                            {
+                                // Đạn trúng Quái -> Quái chết, Đạn mất
+                                if (target is Enemy enemy && fireball.Bounds.Intersects(enemy.Bounds))
+                                {
+                                    enemy.OnStomped(); // Giết quái
+                                    fireball.IsActive = false; // Hủy đạn
+                                }
+                                // Đạn trúng Tường/Cống/Lâu đài -> Đạn mất
+                                else if ((target is Block || target is Pipe || target is Castle || target is MysteryBlock) &&
+                                         fireball.Bounds.Intersects(target.Bounds))
+                                {
+                                    fireball.IsActive = false; // Hủy đạn
+                                }
+                            }
+                        }
+                    }
                     // Player collision with blocks
-                    if (obj is Block || obj is Pipe)
+                    else if (obj is Block || obj is Pipe)
                         Collision.ResolveStaticCollision(_player, obj);
                     // Item collection
                     else if (obj is Item item && _player.Bounds.Intersects(item.Bounds))
@@ -403,6 +481,24 @@ namespace MarioGame._Scenes
 
             // Thêm vào danh sách GameObjects
             _gameObjects.Add(bill);
+        }
+        private void ShootFireball()
+        {
+            // Kiểm tra nếu texture chưa load thì không bắn để tránh lỗi
+            if (_fireballTexture == null) return;
+
+            // Vị trí xuất phát: Giữa người Mario, cao hơn chân một chút
+            Vector2 spawnPos = new Vector2(_player.Position.X, _player.Position.Y + 16);
+
+            // Lấy hướng mặt của Mario (Bạn cần đảm bảo Player.cs đã có thuộc tính FacingDirection)
+            // Nếu chưa có, tạm thời bắn sang phải (1) hoặc dựa vào Velocity.X
+            int dir = _player.FacingDirection;
+
+            // Tạo đạn mới
+            Fireball ball = new Fireball(_fireballTexture, spawnPos, dir);
+
+            // Thêm vào danh sách game object
+            _gameObjects.Add(ball);
         }
     }
 }

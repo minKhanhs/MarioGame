@@ -39,8 +39,8 @@ namespace MarioGame.src._Input
             P1_KeyMap[EGameAction.MoveRight] = Keys.Right;
             P1_KeyMap[EGameAction.Jump] = Keys.Up;
             // Run, Attack, Pause không cho rebind - fixed keys
-            P1_KeyMap[EGameAction.Run] = Keys.RightControl;
-            P1_KeyMap[EGameAction.Attack] = Keys.RightShift;
+            P1_KeyMap[EGameAction.Run] = Keys.RightShift;
+            P1_KeyMap[EGameAction.Attack] = Keys.RightControl;
             P1_KeyMap[EGameAction.Pause] = Keys.Escape;
 
             // Cấu hình mặc định Player 2 (WASD)
@@ -50,7 +50,7 @@ namespace MarioGame.src._Input
             P2_KeyMap[EGameAction.Jump] = Keys.W;
             // Run, Attack, Pause không cho rebind - fixed keys
             P2_KeyMap[EGameAction.Run] = Keys.LeftShift;
-            P2_KeyMap[EGameAction.Attack] = Keys.J;
+            P2_KeyMap[EGameAction.Attack] = Keys.H;
             P2_KeyMap[EGameAction.Pause] = Keys.Back;
         }
 

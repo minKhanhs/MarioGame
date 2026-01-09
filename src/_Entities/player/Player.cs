@@ -19,6 +19,15 @@ namespace MarioGame.src._Entities.player
         private Dictionary<string, SpriteAnimation> _animations;
         private SpriteAnimation _currentAnim;
         private SpriteEffects _flipEffect = SpriteEffects.None;
+        public int FacingDirection
+        {
+            get
+            {
+                // Nếu SpriteEffects.None (không lật) -> Là hướng Phải (1)
+                // Nếu SpriteEffects.FlipHorizontally (lật) -> Là hướng Trái (-1)
+                return _flipEffect == SpriteEffects.None ? 1 : -1;
+            }
+        }
 
         // Player identification
         public int PlayerIndex { get; set; } = 1; // 1 or 2
