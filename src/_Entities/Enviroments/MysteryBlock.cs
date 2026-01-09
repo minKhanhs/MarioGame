@@ -1,6 +1,4 @@
-﻿
-
-using MarioGame.src._Entities.items;
+﻿using MarioGame.src._Entities.items;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -9,78 +7,71 @@ namespace MarioGame.src._Entities.Enviroments
 {
     public class MysteryBlock : Block
     {
-        private bool _isEmpty = false; // Đã bị đập chưa?
+        private bool _isEmpty = false;
 
-        // Biến để tạo hiệu ứng nảy lên khi bị đập
-        private float _bounceOffset = 0f;
-        private float _bounceSpeed = 0f;
+        // Biến di chuyển hình ảnh (không ảnh hưởng hitbox)
+        private float _visualOffsetY = 0f;
+        private float _bounceVelocity = 0f;
         private bool _isBouncing = false;
-        private float _startY; // Vị trí Y ban đầu
 
-        // Random để chọn vật phẩm
         private Random _random = new Random();
 
         public MysteryBlock(Texture2D texture, Vector2 position) : base(texture, position)
         {
-            _startY = position.Y;
         }
 
         public override void Update(GameTime gameTime)
         {
-            // Logic nảy lên rồi rơi xuống
             if (_isBouncing)
             {
-                Position.Y += _bounceSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-                _bounceSpeed += 800f * (float)gameTime.ElapsedGameTime.TotalSeconds; // Trọng lực kéo xuống
+                float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                // Khi rơi về vị trí cũ thì dừng
-                if (Position.Y >= _startY)
+                // Chỉ thay đổi Offset hiển thị
+                _visualOffsetY += _bounceVelocity * dt;
+                _bounceVelocity += 1000f * dt; // Trọng lực kéo xuống nhanh
+
+                // Khi rơi về vị trí cũ (hoặc thấp hơn)
+                if (_visualOffsetY >= 0)
                 {
-                    Position.Y = _startY;
+                    _visualOffsetY = 0;
+                    _bounceVelocity = 0;
                     _isBouncing = false;
-                    _bounceSpeed = 0;
                 }
             }
         }
 
-        // Hàm này được gọi khi Mario đụng đầu vào
         public Item SpawnItem(Texture2D coinTex, Texture2D mushroomTex)
         {
             if (_isEmpty || _isBouncing) return null;
 
-            // 1. Kích hoạt hiệu ứng nảy
+            // 1. Kích hoạt nảy
             _isBouncing = true;
-            _bounceSpeed = -200f; // Vận tốc nảy lên
-            _isEmpty = true; // Đánh dấu đã rỗng
+            _bounceVelocity = -250f; // Nảy lên mạnh
+            _isEmpty = true;
 
-            // 2. Thay đổi màu sắc (Tùy chọn: làm tối đi để biết là block rỗng)
-            // Color = Color.Gray; (Nếu bạn muốn vẽ màu xám)
+            // 2. Sinh vật phẩm
+            // Vị trí sinh ra: Chính giữa block rồi trồi lên
+            Vector2 spawnPos = new Vector2(Position.X, Position.Y - 32);
 
-            // 3. Random sinh vật phẩm
-            // Vị trí sinh ra: Ngay trên đầu block
-            Vector2 spawnPos = new Vector2(Position.X, _startY - 32);
+            int chance = _random.Next(0, 2);
+            if (chance == 0) return new Coin(coinTex, spawnPos);
+            else return new Mushroom(mushroomTex, spawnPos);
+        }
 
-            int chance = _random.Next(0, 2); // Random 0 hoặc 1
-
-            if (chance == 0)
-            {
-                // Sinh ra Coin
-                // Tạo hiệu ứng Coin nảy lên rồi biến mất (hoặc cộng điểm)
-                // Ở đây ta tạo Coin vật lý bình thường
-                return new Coin(coinTex, spawnPos);
-            }
-            else
-            {
-                // Sinh ra Nấm
-                return new Mushroom(mushroomTex, spawnPos);
-            }
+        // Hitbox luôn giữ nguyên vị trí gốc -> Mario không bị kẹt
+        public override Rectangle Bounds
+        {
+            get { return new Rectangle((int)Position.X, (int)Position.Y, Texture.Width, Texture.Height); }
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            // Nếu đã rỗng (bị đập rồi), vẽ màu tối hơn (Gray)
             Color color = _isEmpty ? Color.Gray : Color.White;
-            spriteBatch.Draw(Texture, Position, color);
+
+            // Vẽ tại vị trí gốc + độ nảy
+            Vector2 drawPos = new Vector2(Position.X, Position.Y + _visualOffsetY);
+
+            spriteBatch.Draw(Texture, drawPos, color);
         }
     }
 }

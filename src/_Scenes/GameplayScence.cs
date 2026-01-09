@@ -368,7 +368,7 @@ namespace MarioGame._Scenes
                     {
                         if (_player.Bounds.Intersects(mysteryBlock.Bounds))
                         {
-                            bool isHeadHit = _player.Velocity.Y < 0 && _player.Bounds.Top > mysteryBlock.Bounds.Bottom - 10;
+                            bool isHeadHit = _player.Velocity.Y < 0 && _player.Bounds.Top > mysteryBlock.Bounds.Top;
                             if (isHeadHit)
                             {
                                 _player.Velocity.Y = 0;
