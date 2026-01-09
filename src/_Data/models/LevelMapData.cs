@@ -16,5 +16,7 @@ namespace MarioGame.src._Data.models
         public List<string> Layout { get; set; } // Mảng các chuỗi ký tự biểu diễn bản đồ
         public bool HasBulletBill { get; set; } = false;
         public bool CanShoot { get; set; } = false;
+        public bool IsAutoScroll { get; set; } = false; // Mặc định là False (Camera đi theo Mario)
+        public float ScrollSpeed { get; set; } = 110f;
     }
 }

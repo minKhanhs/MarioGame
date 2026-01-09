@@ -17,6 +17,7 @@ namespace MarioGame.src._Core.Camera
         /// <param name="viewport">Kích thước màn hình (để căn giữa)</param>
         /// <param name="mapBounds">Giới hạn của bản đồ (để không soi ra ngoài map)</param>
         /// <returns>Vị trí mới (Vector2)</returns>
-        Vector2 CalculatePosition(Vector2 currentCamPos, Vector2 targetPos, Rectangle viewport, Rectangle mapBounds);
+        Vector2 CalculatePosition(Vector2 currentCamPos, Vector2 targetPos, Rectangle viewport, Rectangle mapBounds, float deltaTime);
+
     }
 }

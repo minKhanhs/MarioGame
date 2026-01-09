@@ -4,6 +4,7 @@ using MarioGame.src._Input;
 using MarioGame.src._Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace MarioGame.src._Entities.player
         private Dictionary<string, SpriteAnimation> _animations;
         private SpriteAnimation _currentAnim;
         private SpriteEffects _flipEffect = SpriteEffects.None;
+        public bool IsFlying { get; set; } = false;
         public int FacingDirection
         {
             get
@@ -95,6 +97,35 @@ namespace MarioGame.src._Entities.player
                 _flipEffect = SpriteEffects.None; // Mặt phải
             else if (Velocity.X < 0)
                 _flipEffect = SpriteEffects.FlipHorizontally; // Lật mặt sang trái
+            if (IsFlying)
+            {
+                // [CHẾ ĐỘ BAY - LƠ LỬNG]
+                // Reset vận tốc về 0 mỗi frame -> Giúp Mario đứng im khi không bấm phím (Lơ lửng)
+                Velocity = Vector2.Zero;
+                float flySpeed = 10f;
+
+                var keyMap = (PlayerIndex == 1) ? InputSettings.Instance.P1_KeyMap : InputSettings.Instance.P2_KeyMap;
+                KeyboardState kb = Keyboard.GetState();
+
+                // Xử lý di chuyển 4 chiều
+                if (kb.IsKeyDown(keyMap[EGameAction.MoveLeft])) Velocity.X = -flySpeed;
+                if (kb.IsKeyDown(keyMap[EGameAction.MoveRight])) Velocity.X = flySpeed;
+
+                // Bay lên / Bay xuống
+                if (kb.IsKeyDown(keyMap[EGameAction.Jump])) Velocity.Y = -flySpeed;
+                if (kb.IsKeyDown(Keys.S) || kb.IsKeyDown(Keys.Down)) Velocity.Y = flySpeed;
+
+                // Cập nhật hướng mặt
+                if (Velocity.X > 0) _flipEffect = SpriteEffects.None;
+                else if (Velocity.X < 0) _flipEffect = SpriteEffects.FlipHorizontally;
+
+                // Cập nhật vị trí
+                Position += Velocity * dt;
+
+                // Animation khi bay
+                _currentAnim = _animations["Jump"];
+            }
+            // Nếu ở chế độ BAY (Màn Boss): Nhấn là bay lên (Flappy Bird style)
 
             // 2. Chọn Animation dựa trên vận tốc
             if (input.IsJumpPressed && IsOnGround)
@@ -121,10 +152,19 @@ namespace MarioGame.src._Entities.player
             // 3. Cập nhật Animation (để nó chạy frame)
             _currentAnim.Update(gameTime);
 
-            // 2. Áp dụng vật lý (GameObj base)
-            ApplyPhysics();
+            if (!IsFlying)
+            {
+                ApplyPhysics(); // Trọng lực bình thường
+            }
+            else
+            {
+                // Trọng lực nhẹ hơn khi đang bay để dễ điều khiển
+                Velocity.Y += 15f * dt; // Gravity nhẹ (mặc định game thường là ~40-50)
+                Position += Velocity;   // Tự cộng vị trí, không dùng ApplyPhysics gốc để tránh va chạm đất cứng
+            }
 
-            // 3. Logic khác (Cooldown bất tử, animation...)
+            // Giới hạn không cho bay vọt lên trần nhà
+            if (Position.Y < 0) { Position.Y = 0; Velocity.Y = 0; }
         }
         
         public override Rectangle Bounds

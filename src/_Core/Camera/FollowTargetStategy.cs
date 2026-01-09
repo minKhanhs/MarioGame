@@ -9,7 +9,7 @@ namespace MarioGame.src._Core.Camera
 {
     public class FollowTargetStrategy : ICameraStrategy
     {
-        public Vector2 CalculatePosition(Vector2 currentCamPos, Vector2 targetPos, Rectangle viewport, Rectangle mapBounds)
+        public Vector2 CalculatePosition(Vector2 currentCamPos, Vector2 targetPos, Rectangle viewport, Rectangle mapBounds, float deltaTime)
         {
             // 1. Tính toán vị trí để Mario nằm giữa màn hình
             float x = targetPos.X - (viewport.Width / 2f);
