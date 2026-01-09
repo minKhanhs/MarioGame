@@ -127,6 +127,18 @@ namespace MarioGame._Scenes
             _hud.EnemiesDefeated = savedState.EnemiesDefeated;
             _hud.MushroomsCollected = savedState.MushroomsCollected;
             _hud.DeathCount = savedState.DeathCount;
+
+            // --- RESTORE CAMERA STRATEGY ---
+            if (savedState.IsAutoScroll)
+            {
+                var autoScroll = new AutoScrollStrategy();
+                autoScroll.ScrollSpeed = MapLoader.CurrentLevelConfig?.ScrollSpeed ?? 110f;
+                _camera.SetStrategy(autoScroll);
+            }
+            else
+            {
+                _camera.SetStrategy(new FollowTargetStrategy());
+            }
         }
 
         private void LoadLevelFromFile(Dictionary<string, SpriteAnimation> playerAnims)
@@ -494,6 +506,7 @@ namespace MarioGame._Scenes
                 EnemiesDefeated = _hud.EnemiesDefeated,
                 MushroomsCollected = _hud.MushroomsCollected,
                 DeathCount = _hud.DeathCount,
+                IsAutoScroll = MapLoader.CurrentLevelConfig?.IsAutoScroll ?? false,
                 IsValid = true
             };
             GameManager.Instance.SaveGameState(state);

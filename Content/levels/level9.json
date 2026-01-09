@@ -5,7 +5,6 @@
   "TileSize": 32,
   "HasBulletBill": true,
   "IsAutoScroll": true,
-  "ScrollSpeed": 50.0,
   "CanShoot": true,
   "Layout": [
     "................................................................................",

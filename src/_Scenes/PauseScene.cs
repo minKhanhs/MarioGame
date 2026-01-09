@@ -181,7 +181,10 @@ namespace MarioGame._Scenes
 
         private void ResumeGame()
         {
-            // Return to gameplay with correct game mode WITHOUT reloading content
+            // QUAN TR?NG: Resume ph?i dùng GameplayScene/TwoPlayerGameplayScene c?
+            // v?i LoadContent() ?? restore state t? saved game state
+            // Không t?o scene m?i!
+            
             if (GameManager.Instance.GameMode == 2)
             {
                 GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(_levelIndex));
@@ -190,6 +193,8 @@ namespace MarioGame._Scenes
             {
                 GameManager.Instance.ChangeScene(new GameplayScene(_levelIndex));
             }
+            
+            // GameplayScene.LoadContent() s? t? ??ng detect saved state và restore
         }
     }
 }

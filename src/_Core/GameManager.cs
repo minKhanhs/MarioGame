@@ -31,12 +31,16 @@ namespace MarioGame.src._Core
         public int MushroomsCollected { get; set; }
         public int DeathCount { get; set; }
 
+        // Camera Strategy info for resume
+        public bool IsAutoScroll { get; set; }
+
         public GameState()
         {
             IsValid = false;
             GameObjects = new List<GameObj>();
             PlayerScale = 1.0f;
             ElapsedTime = 0f;
+            IsAutoScroll = false;
         }
 
         public void Clear()

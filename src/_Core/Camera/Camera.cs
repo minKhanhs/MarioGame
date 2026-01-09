@@ -32,6 +32,13 @@ namespace MarioGame.src._Core.Camera
         // SỬA: Thêm tham số GameTime
         public void Update(Vector2 targetPosition, Rectangle mapBounds, GameTime gameTime)
         {
+            // Guard clause: Nếu strategy chưa set thì return
+            if (_strategy == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[WARNING] Camera strategy not set!");
+                return;
+            }
+
             MapBounds = mapBounds;
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 

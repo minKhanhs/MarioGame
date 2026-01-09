@@ -105,9 +105,59 @@ namespace MarioGame._Scenes
 
             MapLoader.Initialize(textures);
 
-            LoadLevelFromFile(playerAnims);
+            GameState savedState = GameManager.Instance.GetSavedGameState();
+            if (savedState.IsValid && savedState.LevelIndex == _levelIndex)
+            {
+                // Restore từ pause (chỉ restore P1, P2 sẽ tạo mới)
+                // TODO: Nếu muốn support 2 player pause/resume đầy đủ thì cần lưu state P1 + P2
+                RestoreGameState(savedState, playerAnims);
+                _isResumingFromPause = true;
+                GameManager.Instance.ClearSavedGameState();
+            }
+            else
+            {
+                LoadLevelFromFile(playerAnims);
+            }
 
             _isContentLoaded = true;
+        }
+
+        private void RestoreGameState(GameState savedState, Dictionary<string, SpriteAnimation> playerAnims)
+        {
+            _gameObjects = new List<GameObj>(savedState.GameObjects);
+            _player1 = new Player(savedState.PlayerPosition, playerAnims, 1);
+            _player1.Velocity = savedState.PlayerVelocity;
+            _player1.Lives = savedState.PlayerLives;
+            _player1.Coins = savedState.PlayerCoins;
+            _player1.Score = savedState.PlayerScore;
+            _player1.Scale = savedState.PlayerScale;
+            _previousPlayer1Lives = _player1.Lives;
+
+            if (_player1.Scale > 1.2f) _player1.SetState(new BigState());
+            else _player1.SetState(new SmallState());
+
+            _hud.LivesRemaining = savedState.PlayerLives;
+            _hud.CoinsCollected = savedState.PlayerCoins;
+            _hud.ElapsedTime = savedState.ElapsedTime;
+            _hud.EnemiesDefeated = savedState.EnemiesDefeated;
+            _hud.MushroomsCollected = savedState.MushroomsCollected;
+            _hud.DeathCount = savedState.DeathCount;
+
+            // P2 được tạo mới ở vị trí gần P1
+            _player2 = new Player(new Vector2(savedState.PlayerPosition.X + 50, savedState.PlayerPosition.Y), playerAnims, 2);
+            _previousPlayer2Lives = _player2.Lives;
+
+            // --- RESTORE CAMERA STRATEGY ---
+            if (savedState.IsAutoScroll)
+            {
+                var autoScroll = new AutoScrollStrategy();
+                autoScroll.ScrollSpeed = MapLoader.CurrentLevelConfig?.ScrollSpeed ?? 110f;
+                _camera.SetStrategy(autoScroll);
+            }
+            else
+            {
+                _camera.SetStrategy(new FollowTargetStrategy());
+            }
         }
 
         private void LoadLevelFromFile(Dictionary<string, SpriteAnimation> playerAnims)
@@ -484,6 +534,11 @@ namespace MarioGame._Scenes
                 PlayerScore = _player1.Score,
                 PlayerScale = _player1.Scale,
                 GameObjects = new List<GameObj>(_gameObjects),
+                ElapsedTime = _hud.ElapsedTime,
+                EnemiesDefeated = _hud.EnemiesDefeated,
+                MushroomsCollected = _hud.MushroomsCollected,
+                DeathCount = _hud.DeathCount,
+                IsAutoScroll = MapLoader.CurrentLevelConfig?.IsAutoScroll ?? false,
                 IsValid = true
             };
             GameManager.Instance.SaveGameState(state);
