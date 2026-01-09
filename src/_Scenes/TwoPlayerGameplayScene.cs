@@ -1,4 +1,5 @@
-﻿using MarioGame.src._Core;
+﻿using MarioGame.Entities.Enemies;
+using MarioGame.src._Core;
 using MarioGame.src._Core.Camera;
 using MarioGame.src._Data;
 using MarioGame.src._Entities.Base;
@@ -6,6 +7,7 @@ using MarioGame.src._Entities.enemies;
 using MarioGame.src._Entities.Enviroments;
 using MarioGame.src._Entities.items;
 using MarioGame.src._Entities.player;
+using MarioGame.src._Entities.player.states;
 using MarioGame.src._Input;
 using MarioGame.src._Scenes;
 using MarioGame.src._Utils;
@@ -22,7 +24,7 @@ namespace MarioGame._Scenes
         private int _levelIndex;
         private List<GameObj> _gameObjects;
 
-        // Vẫn giữ biến riêng lẻ theo ý bạn
+        // Hai người chơi riêng biệt
         private Player _player1;
         private Player _player2;
 
@@ -34,13 +36,19 @@ namespace MarioGame._Scenes
         private int _previousPlayer1Lives = 3;
         private int _previousPlayer2Lives = 3;
 
-        // --- CÁC BIẾN MỚI CHO TÍNH NĂNG ---
+        // --- CÁC BIẾN TÍNH NĂNG ---
         private Texture2D _fireballTexture;
-        private float _shootCooldown = 0f;
+        // Cooldown bắn riêng cho từng người để công bằng
+        private float _shootCooldownP1 = 0f;
+        private float _shootCooldownP2 = 0f;
+
         private float _bulletSpawnTimer = 0f;
         private float _bulletSpawnInterval = 5.0f;
         private Random _random = new Random();
-        // -----------------------------------
+
+        // --- BOSS ---
+        private Boss _boss;
+        private bool _isBossLevel = false;
 
         private bool _isLevelFinished = false;
         private float _finishTimer = 0f;
@@ -63,8 +71,6 @@ namespace MarioGame._Scenes
 
             _camera = new Camera(device.Viewport);
             _backgroundTex = content.Load<Texture2D>("sprites/background");
-
-            // Load thêm texture đạn
             _fireballTexture = content.Load<Texture2D>("sprites/fireball");
 
             SpriteFont hudFont = null;
@@ -94,8 +100,8 @@ namespace MarioGame._Scenes
             textures.Add("pipe", content.Load<Texture2D>("sprites/pipe"));
             textures.Add("plant", content.Load<Texture2D>("sprites/plant"));
             textures.Add("koopa", content.Load<Texture2D>("sprites/koopa"));
-            textures.Add("bullet", content.Load<Texture2D>("sprites/bullet")); // Load BulletBill
-            textures.Add("mystery", content.Load<Texture2D>("sprites/present")); // Load Mystery
+            textures.Add("bullet", content.Load<Texture2D>("sprites/bullet"));
+            textures.Add("mystery", content.Load<Texture2D>("sprites/present"));
 
             MapLoader.Initialize(textures);
 
@@ -111,7 +117,13 @@ namespace MarioGame._Scenes
             {
                 _gameObjects = MapLoader.LoadLevel(levelPath);
 
-                // --- CÀI ĐẶT CAMERA (AutoScroll hoặc Follow) ---
+                // --- KIỂM TRA MÀN BOSS (Level 10) ---
+                if (_levelIndex == 10)
+                {
+                    _isBossLevel = true;
+                }
+
+                // --- CÀI ĐẶT CAMERA ---
                 if (MapLoader.CurrentLevelConfig.IsAutoScroll)
                 {
                     var autoScroll = new AutoScrollStrategy();
@@ -120,7 +132,6 @@ namespace MarioGame._Scenes
                 }
                 else
                 {
-                    // Mặc định bám theo mục tiêu (sẽ set target là trung bình cộng ở Update)
                     _camera.SetStrategy(new FollowTargetStrategy());
                 }
 
@@ -129,6 +140,22 @@ namespace MarioGame._Scenes
 
                 _previousPlayer1Lives = _player1.Lives;
                 _previousPlayer2Lives = _player2.Lives;
+
+                // --- SETUP BOSS NẾU CÓ ---
+                if (_isBossLevel)
+                {
+                    // Cả 2 người chơi đều bay
+                    _player1.IsFlying = true;
+                    _player2.IsFlying = true;
+
+                    var content = GameManager.Instance.Content;
+                    Texture2D bossTex = content.Load<Texture2D>("sprites/boss"); // Đổi tên ảnh boss của bạn
+                    Texture2D blockTex = content.Load<Texture2D>("sprites/blockbreak");
+                    Texture2D pipeTex = content.Load<Texture2D>("sprites/pipe");
+
+                    // Tạo boss
+                    _boss = new Boss(bossTex, new Vector2(0, 300), blockTex, pipeTex, GameManager.Instance.GraphicsDevice);
+                }
 
                 _hud.Reset();
                 System.Diagnostics.Debug.WriteLine($"[TWO PLAYER] Loaded level {_levelIndex}");
@@ -143,6 +170,7 @@ namespace MarioGame._Scenes
         public void Update(GameTime gameTime)
         {
             _hud.Update(gameTime);
+            bool isAutoScroll = MapLoader.CurrentLevelConfig != null && MapLoader.CurrentLevelConfig.IsAutoScroll;
 
             if (_isResumingFromPause)
             {
@@ -152,8 +180,7 @@ namespace MarioGame._Scenes
             }
 
             // --- 1. LOGIC BULLET BILL ---
-            // Kiểm tra nếu P1 hoặc P2 đi đủ xa
-            if ((_player1.Position.X > 2 || _player2.Position.X > 2)
+            if ((_player1.Position.X > 2 || _player2.Position.X > 2 || _isBossLevel)
                 && MapLoader.CurrentLevelConfig != null
                 && MapLoader.CurrentLevelConfig.HasBulletBill)
             {
@@ -166,30 +193,59 @@ namespace MarioGame._Scenes
                 }
             }
 
-            KeyboardState currentKbState = Keyboard.GetState();
-            _shootCooldown -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            // --- 2. XỬ LÝ BẮN ĐẠN CHO P1 VÀ P2 ---
-            // Chỉ cho phép bắn nếu map config cho phép và hết cooldown
-            if (_shootCooldown <= 0 && MapLoader.CurrentLevelConfig != null && MapLoader.CurrentLevelConfig.CanShoot)
+            // --- 2. LOGIC BOSS ---
+            if (_isBossLevel && _boss != null && _boss.IsActive)
             {
-                // Check P1 Fire
+                _boss.Update(gameTime);
+
+                // Boss bám theo Camera bên phải
+                if (isAutoScroll)
+                    _boss.Position.X = _camera.Position.X + _camera.Viewport.Width - 150;
+
+                // Lấy đạn Boss ném ra
+                if (_boss.SpawnedObjects.Count > 0)
+                {
+                    foreach (var obj in _boss.SpawnedObjects) _gameObjects.Add(obj);
+                    _boss.SpawnedObjects.Clear();
+                }
+
+                // Va chạm Player vs Boss
+                if (_player1.Bounds.Intersects(_boss.Bounds)) { _player1.TakeDamage(); _player1.Position.X -= 50; }
+                if (_player2.Bounds.Intersects(_boss.Bounds)) { _player2.TakeDamage(); _player2.Position.X -= 50; }
+            }
+
+            // --- 3. CHECK BOSS DEATH ---
+            if (_isBossLevel && _boss != null && !_boss.IsActive)
+            {
+                _isLevelFinished = true;
+            }
+
+            KeyboardState currentKbState = Keyboard.GetState();
+
+            // --- 4. PLAYER SHOOTING ---
+            float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            _shootCooldownP1 -= dt;
+            _shootCooldownP2 -= dt;
+
+            if (MapLoader.CurrentLevelConfig != null && MapLoader.CurrentLevelConfig.CanShoot)
+            {
+                // P1 Shoot
                 Keys p1Attack = InputSettings.Instance.P1_KeyMap[EGameAction.Attack];
-                if (currentKbState.IsKeyDown(p1Attack))
+                if (currentKbState.IsKeyDown(p1Attack) && _shootCooldownP1 <= 0)
                 {
                     ShootFireball(_player1);
-                    _shootCooldown = 0.2f;
+                    _shootCooldownP1 = 0.3f;
                 }
-                // Check P2 Fire
+                // P2 Shoot
                 Keys p2Attack = InputSettings.Instance.P2_KeyMap[EGameAction.Attack];
-                if (currentKbState.IsKeyDown(p2Attack))
+                if (currentKbState.IsKeyDown(p2Attack) && _shootCooldownP2 <= 0)
                 {
                     ShootFireball(_player2);
-                    _shootCooldown = 0.2f;
+                    _shootCooldownP2 = 0.3f;
                 }
             }
 
-            // Pause Logic
+            // Pause
             if (currentKbState.IsKeyDown(Keys.Escape) && !_previousKeyboardState.IsKeyDown(Keys.Escape))
             {
                 PauseGame();
@@ -200,10 +256,10 @@ namespace MarioGame._Scenes
 
             if (_isPaused) return;
 
-            // Level Complete Logic
+            // Level Complete
             if (_isLevelFinished)
             {
-                _finishTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                _finishTimer += dt;
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false;
@@ -213,47 +269,51 @@ namespace MarioGame._Scenes
                 return;
             }
 
-            // Update Players
+            // --- 5. UPDATE PLAYERS & WALL BLOCK ---
             _player1.Update(gameTime);
             _player1.IsOnGround = false;
 
             _player2.Update(gameTime);
             _player2.IsOnGround = false;
 
-            // Check Lives Logic
-            if (_player1.Lives < _previousPlayer1Lives) { _hud.DeathCount++; _previousPlayer1Lives = _player1.Lives; }
-            else if (_player1.Lives == _previousPlayer1Lives) { _previousPlayer1Lives = _player1.Lives; }
-
-            if (_player2.Lives < _previousPlayer2Lives) { _hud.DeathCount++; _previousPlayer2Lives = _player2.Lives; }
-            else if (_player2.Lives == _previousPlayer2Lives) { _previousPlayer2Lives = _player2.Lives; }
-
-            // --- LOGIC CHẾT KHI AUTO SCROLL ---
-            float camLeft = _camera.Position.X;
-            if (MapLoader.CurrentLevelConfig != null && MapLoader.CurrentLevelConfig.IsAutoScroll)
+            if (isAutoScroll)
             {
-                if (_player1.Position.X < camLeft - 32) _player1.Die();
-                if (_player2.Position.X < camLeft - 32) _player2.Die();
+                float camLeft = _camera.Position.X;
+                // Chặn tường trái
+                if (_player1.Position.X < camLeft) { _player1.Position.X = camLeft; if (_player1.Velocity.X < 0) _player1.Velocity.X = 0; }
+                if (_player2.Position.X < camLeft) { _player2.Position.X = camLeft; if (_player2.Velocity.X < 0) _player2.Velocity.X = 0; }
+            }
+            else
+            {
+                if (_player1.Position.X < 0) _player1.Position.X = 0;
+                if (_player2.Position.X < 0) _player2.Position.X = 0;
             }
 
-            // Game Over Check
+            // --- 6. CHECK LIVES & RESPAWN ---
+            CheckPlayerLife(_player1, ref _previousPlayer1Lives, isAutoScroll);
+            CheckPlayerLife(_player2, ref _previousPlayer2Lives, isAutoScroll);
+
+            // Game Over Check (Cả 2 cùng chết mới thua, hoặc 1 chết thua luôn tùy bạn. Ở đây để 1 người chết là thua)
             if (_player1.Lives <= 0 || _player1.Position.Y > 1000 || _player2.Lives <= 0 || _player2.Position.Y > 1000)
             {
-                string deathReason = "";
-                if (_player1.Lives <= 0) deathReason = "Player 1 died";
-                else if (_player2.Lives <= 0) deathReason = "Player 2 died";
-                else deathReason = "Player fell";
+                // Logic chết khi AutoScroll bị kẹt quá xa
+                if (isAutoScroll && (_player1.Position.X < _camera.Position.X - 100 || _player2.Position.X < _camera.Position.X - 100))
+                {
+                    // Force die
+                }
 
+                string deathReason = "Game Over";
                 GameManager.Instance.ChangeScene(new TwoPlayerGameOverScene(_levelIndex, _hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated, deathReason));
                 return;
             }
 
-            // --- VÒNG LẶP UPDATE GAME OBJECTS & VA CHẠM ---
+            // --- 7. UPDATE OBJECTS & COLLISION ---
             for (int i = _gameObjects.Count - 1; i >= 0; i--)
             {
                 var obj = _gameObjects[i];
                 obj.Update(gameTime);
 
-                // 1. Quái/Item va chạm môi trường
+                // Môi trường
                 if (obj is MovableObj movableObj && !(obj is Player) && !(obj is PiranhaPlant) && !(obj is BulletBill) && !(obj is Fireball))
                 {
                     foreach (var other in _gameObjects)
@@ -263,121 +323,118 @@ namespace MarioGame._Scenes
 
                 if (obj.IsActive)
                 {
-                    // ------------------------------------
-                    // XỬ LÝ VA CHẠM CHO PLAYER 1 (P1)
-                    // ------------------------------------
-                    // Mystery Block
-                    if (obj is MysteryBlock mystery)
-                    {
-                        if (_player1.Bounds.Intersects(mystery.Bounds))
-                        {
-                            bool isHeadHit = _player1.Velocity.Y < 0 && _player1.Bounds.Top > mystery.Bounds.Bottom - 10;
-                            if (isHeadHit)
-                            {
-                                _player1.Velocity.Y = 0;
-                                var content = GameManager.Instance.Content;
-                                Item spawned = mystery.SpawnItem(content.Load<Texture2D>("sprites/coin"), content.Load<Texture2D>("sprites/mushroom"));
-                                if (spawned != null) _gameObjects.Add(spawned);
-                            }
-                            Collision.ResolveStaticCollision(_player1, obj);
-                        }
-                    }
-                    // Block/Pipe
-                    else if (obj is Block || obj is Pipe)
-                    {
-                        Collision.ResolveStaticCollision(_player1, obj);
-                    }
-                    // Item
-                    else if (obj is Item item && _player1.Bounds.Intersects(item.Bounds))
-                    {
-                        if (item is Mushroom) _hud.MushroomsCollected++;
-                        item.OnCollect(_player1);
-                    }
-                    // Enemy
-                    else if (obj is Enemy enemy && _player1.Bounds.Intersects(enemy.Bounds))
-                    {
-                        if (enemy is PiranhaPlant) _player1.TakeDamage();
-                        else if (Collision.IsTopCollision(_player1, enemy)) { enemy.OnStomped(); _player1.Velocity.Y = -5f; _hud.EnemiesDefeated++; }
-                        else _player1.TakeDamage();
-                    }
+                    // Xử lý va chạm cho từng Player
+                    HandlePlayerCollision(_player1, obj);
+                    HandlePlayerCollision(_player2, obj);
 
-                    // ------------------------------------
-                    // XỬ LÝ VA CHẠM CHO PLAYER 2 (P2)
-                    // ------------------------------------
-                    // Mystery Block P2
-                    if (obj is MysteryBlock mystery2)
-                    {
-                        if (_player2.Bounds.Intersects(mystery2.Bounds))
-                        {
-                            bool isHeadHit = _player2.Velocity.Y < 0 && _player2.Bounds.Top > mystery2.Bounds.Bottom - 10;
-                            if (isHeadHit)
-                            {
-                                _player2.Velocity.Y = 0;
-                                var content = GameManager.Instance.Content;
-                                Item spawned = mystery2.SpawnItem(content.Load<Texture2D>("sprites/coin"), content.Load<Texture2D>("sprites/mushroom"));
-                                if (spawned != null) _gameObjects.Add(spawned);
-                            }
-                            Collision.ResolveStaticCollision(_player2, obj);
-                        }
-                    }
-                    else if (obj is Block || obj is Pipe) // Block check cho P2
-                    {
-                        Collision.ResolveStaticCollision(_player2, obj);
-                    }
-                    else if (obj is Item item2 && _player2.Bounds.Intersects(item2.Bounds))
-                    {
-                        if (item2 is Mushroom) _hud.MushroomsCollected++;
-                        item2.OnCollect(_player2);
-                    }
-                    else if (obj is Enemy enemy2 && _player2.Bounds.Intersects(enemy2.Bounds))
-                    {
-                        if (enemy2 is PiranhaPlant) _player2.TakeDamage();
-                        else if (Collision.IsTopCollision(_player2, enemy2)) { enemy2.OnStomped(); _player2.Velocity.Y = -5f; _hud.EnemiesDefeated++; }
-                        else _player2.TakeDamage();
-                    }
-
-                    // ------------------------------------
-                    // LOGIC CHUNG (Castle & Fireball)
-                    // ------------------------------------
-                    if (obj is Castle)
-                    {
-                        if (_player1.Bounds.Intersects(obj.Bounds)) _player1.HasReachedGoal = true;
-                        if (_player2.Bounds.Intersects(obj.Bounds)) _player2.HasReachedGoal = true;
-                        if (_player1.HasReachedGoal && _player2.HasReachedGoal) _isLevelFinished = true;
-                    }
-
-                    // Logic Đạn (Fireball)
+                    // Xử lý Fireball chung (Trúng Boss/Quái)
                     if (obj is Fireball fireball)
                     {
+                        // Check Boss
+                        if (_isBossLevel && _boss != null && _boss.IsActive && fireball.Bounds.Intersects(_boss.Bounds))
+                        {
+                            _boss.TakeDamage();
+                            fireball.IsActive = false;
+                        }
+
+                        // Check Quái
                         foreach (var target in _gameObjects)
                         {
                             if (target != fireball && target.IsActive)
                             {
-                                if (target is Enemy enemy && fireball.Bounds.Intersects(enemy.Bounds))
+                                if (target is Enemy enemy && !(target is BossProjectile) && fireball.Bounds.Intersects(enemy.Bounds))
                                 {
                                     enemy.OnStomped();
                                     fireball.IsActive = false;
                                 }
-                                else if ((target is Block || target is Pipe || target is Castle || target is MysteryBlock) && fireball.Bounds.Intersects(target.Bounds))
+                                else if ((target is Block || target is Pipe || target is Castle) && fireball.Bounds.Intersects(target.Bounds))
                                 {
                                     fireball.IsActive = false;
                                 }
                             }
                         }
                     }
+
+                    // Castle Finish (Màn thường)
+                    if (obj is Castle && !_isBossLevel)
+                    {
+                        if (_player1.HasReachedGoal && _player2.HasReachedGoal) _isLevelFinished = true;
+                    }
                 }
 
-                if (!obj.IsActive && !(obj is Castle && (_player1.HasReachedGoal || _player2.HasReachedGoal)))
-                    _gameObjects.RemoveAt(i);
+                if (!obj.IsActive) _gameObjects.RemoveAt(i);
             }
 
             _hud.LivesRemaining = System.Math.Min(_player1.Lives, _player2.Lives);
             _hud.CoinsCollected = _player1.Coins + _player2.Coins;
 
-            // Camera Update (Trung bình cộng 2 người)
-            Vector2 avgPos = new Vector2((_player1.Position.X + _player2.Position.X) / 2, (_player1.Position.Y + _player2.Position.Y) / 2);
+            // Camera trung bình cộng
+            Vector2 avgPos = (_player1.Position + _player2.Position) / 2;
             Rectangle mapBounds = new Rectangle(0, 0, 3200, 736);
             _camera.Update(avgPos, mapBounds, gameTime);
+        }
+
+        // Hàm phụ trợ xử lý va chạm để code đỡ dài
+        private void HandlePlayerCollision(Player p, GameObj obj)
+        {
+            if (obj is MysteryBlock mystery)
+            {
+                if (p.Bounds.Intersects(mystery.Bounds))
+                {
+                    bool isHeadHit = p.Velocity.Y < 0 && p.Bounds.Top > mystery.Bounds.Bottom - 10;
+                    if (isHeadHit)
+                    {
+                        p.Velocity.Y = 0;
+                        var content = GameManager.Instance.Content;
+                        Item spawned = mystery.SpawnItem(content.Load<Texture2D>("sprites/coin"), content.Load<Texture2D>("sprites/mushroom"));
+                        if (spawned != null) _gameObjects.Add(spawned);
+                    }
+                    Collision.ResolveStaticCollision(p, obj);
+                }
+            }
+            else if (obj is Block || obj is Pipe)
+            {
+                Collision.ResolveStaticCollision(p, obj);
+            }
+            else if (obj is Item item && p.Bounds.Intersects(item.Bounds))
+            {
+                if (item is Mushroom) _hud.MushroomsCollected++;
+                item.OnCollect(p);
+            }
+            else if (obj is Enemy enemy && p.Bounds.Intersects(enemy.Bounds))
+            {
+                if (enemy is PiranhaPlant) p.TakeDamage();
+                else if (enemy is BossProjectile) p.TakeDamage();
+                else if (Collision.IsTopCollision(p, enemy)) { enemy.OnStomped(); p.Velocity.Y = -5f; _hud.EnemiesDefeated++; }
+                else p.TakeDamage();
+            }
+            else if (obj is Castle)
+            {
+                if (p.Bounds.Intersects(obj.Bounds)) p.HasReachedGoal = true;
+            }
+        }
+
+        private void CheckPlayerLife(Player p, ref int prevLives, bool isAutoScroll)
+        {
+            if (p.Lives < prevLives) { _hud.DeathCount++; prevLives = p.Lives; }
+            else if (p.Lives == prevLives) { prevLives = p.Lives; }
+
+            // Logic hồi sinh nếu chưa hết mạng hẳn
+            if (p.Lives > 0 && (p.Position.Y > 1000 || (isAutoScroll && p.Position.X < _camera.Position.X - 100)))
+            {
+                p.Lives--;
+                prevLives = p.Lives;
+
+                Vector2 respawnPos;
+                if (isAutoScroll) respawnPos = new Vector2(_camera.Position.X + 150, 200);
+                else respawnPos = new Vector2(50, 200); // Hoặc về vị trí của người chơi còn sống?
+
+                p.Position = respawnPos;
+                p.Velocity = Vector2.Zero;
+                p.SetState(new SmallState());
+                if (_isBossLevel) p.IsFlying = true; // Nhớ bật lại bay
+                p.StartInvincible();
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -387,20 +444,22 @@ namespace MarioGame._Scenes
             spriteBatch.End();
 
             spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp);
+
             foreach (var obj in _gameObjects)
                 if (_camera.IsVisible(obj.Bounds)) obj.Draw(spriteBatch);
+
+            if (_isBossLevel && _boss != null) _boss.Draw(spriteBatch);
 
             _player1.Draw(spriteBatch);
             _player2.Draw(spriteBatch);
             spriteBatch.End();
 
-            // Draw player labels (P1, P2)
+            // Draw Labels
             if (_playerLabelFont != null)
             {
                 spriteBatch.Begin(transformMatrix: _camera.ViewMatrix, samplerState: SamplerState.PointClamp);
                 Vector2 p1Pos = new Vector2(_player1.Bounds.X + 8, _player1.Bounds.Y - 25);
                 spriteBatch.DrawString(_playerLabelFont, "P1", p1Pos, Color.Cyan);
-
                 Vector2 p2Pos = new Vector2(_player2.Bounds.X + 8, _player2.Bounds.Y - 25);
                 spriteBatch.DrawString(_playerLabelFont, "P2", p2Pos, Color.Magenta);
                 spriteBatch.End();
@@ -414,7 +473,7 @@ namespace MarioGame._Scenes
         private void PauseGame()
         {
             _isPaused = true;
-            // Lưu P1 làm đại diện (hoặc tạo Logic Save riêng cho 2P nếu cần)
+            // Lưu trạng thái P1 đại diện
             GameState state = new GameState
             {
                 LevelIndex = _levelIndex,
@@ -425,10 +484,6 @@ namespace MarioGame._Scenes
                 PlayerScore = _player1.Score,
                 PlayerScale = _player1.Scale,
                 GameObjects = new List<GameObj>(_gameObjects),
-                ElapsedTime = _hud.ElapsedTime,
-                EnemiesDefeated = _hud.EnemiesDefeated,
-                MushroomsCollected = _hud.MushroomsCollected,
-                DeathCount = _hud.DeathCount,
                 IsValid = true
             };
             GameManager.Instance.SaveGameState(state);
@@ -441,7 +496,11 @@ namespace MarioGame._Scenes
             var device = GameManager.Instance.GraphicsDevice;
             Texture2D bulletTex = content.Load<Texture2D>("sprites/bullet");
             BulletBill bill = new BulletBill(bulletTex, _camera, device);
-            float randomY = _random.Next(450, 650);
+
+            float randomY;
+            if (_isBossLevel) randomY = _random.Next(50, 650);
+            else randomY = _random.Next(450, 650);
+
             bill.Spawn(randomY);
             _gameObjects.Add(bill);
         }
