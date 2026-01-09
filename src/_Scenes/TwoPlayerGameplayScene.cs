@@ -117,8 +117,8 @@ namespace MarioGame._Scenes
             {
                 _gameObjects = MapLoader.LoadLevel(levelPath);
 
-                // --- KIỂM TRA MÀN BOSS (Level 10) ---
-                if (_levelIndex == 10)
+                // --- KIỂM TRA MÀN BOSS ---
+                if (_levelIndex == Constants.BOSS_LEVEL)
                 {
                     _isBossLevel = true;
                 }
@@ -264,7 +264,7 @@ namespace MarioGame._Scenes
                 {
                     _isContentLoaded = false;
                     int bonusScore = _hud.CalculateLevelBonus();
-                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, 3, _hud.CurrentScore, _hud.CoinsCollected, bonusScore, _hud.EnemiesDefeated, _hud.ElapsedTime, _hud.MushroomsCollected, _hud.DeathCount));
+                    GameManager.Instance.ChangeScene(new LevelCompleteScene(_levelIndex, Constants.TOTAL_LEVELS, _hud.CurrentScore, _hud.CoinsCollected, bonusScore, _hud.EnemiesDefeated, _hud.ElapsedTime, _hud.MushroomsCollected, _hud.DeathCount));
                 }
                 return;
             }
@@ -370,7 +370,7 @@ namespace MarioGame._Scenes
 
             // Camera trung bình cộng
             Vector2 avgPos = (_player1.Position + _player2.Position) / 2;
-            Rectangle mapBounds = new Rectangle(0, 0, 3200, 736);
+            Rectangle mapBounds = new Rectangle(0, 0, Constants.MAP_WIDTH, Constants.MAP_HEIGHT);
             _camera.Update(avgPos, mapBounds, gameTime);
         }
 

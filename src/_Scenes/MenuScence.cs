@@ -58,13 +58,13 @@ namespace MarioGame.src._Scenes
         {
             _buttons = new List<Button>();
 
-            // Button dimensions - retro style with larger buttons
-            int buttonWidth = 280;
-            int buttonHeight = 60;
+            // Button dimensions - retro style
+            int buttonWidth = 200;
+            int buttonHeight = 50;
             int spacing = 20;
-            int hSpacing = 320; // Horizontal spacing for 2 columns
+            int hSpacing = 240; // Horizontal spacing for 2 columns
 
-            // Center position for 2x4 grid (matching original layout)
+            // Center position for 2x4 grid
             int centerX = 640;
             int startX = centerX - hSpacing / 2 - buttonWidth / 2;
             int startY = 200;
@@ -76,9 +76,10 @@ namespace MarioGame.src._Scenes
                 _buttonFont
             )
             {
-                BackgroundColor = new Color(32, 32, 32),      // #202020 surface
-                HoverBackgroundColor = new Color(230, 0, 18), // #E60012 primary red
-                BorderColor = new Color(240, 240, 240)        // #F0F0F0 border-light
+                BackgroundColor = new Color(32, 32, 32),
+                HoverBackgroundColor = new Color(230, 0, 18),
+                BorderColor = new Color(240, 240, 240),
+                TextScale = 0.65f
             });
 
             _buttons.Add(new Button(
@@ -88,8 +89,9 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(67, 176, 71), // #43B047 secondary green
-                BorderColor = new Color(240, 240, 240)
+                HoverBackgroundColor = new Color(67, 176, 71),
+                BorderColor = new Color(240, 240, 240),
+                TextScale = 0.65f
             });
 
             // Row 2: Settings, Achievements
@@ -102,7 +104,8 @@ namespace MarioGame.src._Scenes
                 BackgroundColor = new Color(32, 32, 32),
                 HoverBackgroundColor = Color.White,
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.65f
             });
 
             _buttons.Add(new Button(
@@ -112,9 +115,10 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(251, 208, 0), // #FBD000 accent yellow
+                HoverBackgroundColor = new Color(251, 208, 0),
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.6f
             });
 
             // Row 3: Play History, Compendium
@@ -125,9 +129,10 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(156, 39, 176), // Purple
+                HoverBackgroundColor = new Color(156, 39, 176),
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.6f
             });
 
             _buttons.Add(new Button(
@@ -137,9 +142,10 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(180, 100, 180), // Purple/Magenta
+                HoverBackgroundColor = new Color(180, 100, 180),
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.65f
             });
 
             // Row 4: About Us, Credits
@@ -150,9 +156,10 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(6, 147, 227),  // Sky blue
+                HoverBackgroundColor = new Color(6, 147, 227),
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.65f
             });
 
             _buttons.Add(new Button(
@@ -162,19 +169,20 @@ namespace MarioGame.src._Scenes
             )
             {
                 BackgroundColor = new Color(32, 32, 32),
-                HoverBackgroundColor = new Color(100, 150, 200), // Light blue
+                HoverBackgroundColor = new Color(100, 150, 200),
                 BorderColor = new Color(240, 240, 240),
-                TextColor = Color.White
+                TextColor = Color.White,
+                TextScale = 0.65f
             });
 
-            // Help button (question mark) - top right corner with bounce animation
+            // Help button (question mark) - top right corner
             _helpButton = new Button(
                 new Rectangle(1280 - 80, 20, 60, 60),
                 "?",
                 _buttonFont
             )
             {
-                BackgroundColor = new Color(251, 208, 0),       // #FBD000 accent yellow
+                BackgroundColor = new Color(251, 208, 0),
                 HoverBackgroundColor = new Color(251, 208, 0),
                 BorderColor = Color.Black,
                 TextColor = Color.Black

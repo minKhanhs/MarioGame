@@ -76,17 +76,17 @@ namespace MarioGame.src._Scenes
         {
             _buttons = new List<Button>();
 
-            int buttonWidth = 200;
+            int buttonWidth = 240;
             int buttonHeight = 50;
             int spacing = 20;
 
             int centerX = 640;
             int startX = centerX - buttonWidth / 2;
-            int startY = 500;
+            int startY = 550;
 
-            // Retry Level button
-            _buttons.Add(new Button(
-                new Rectangle(startX, startY, buttonWidth, buttonHeight),
+            // Retry Level button (left)
+            var retryButton = new Button(
+                new Rectangle(startX - 140, startY, buttonWidth, buttonHeight),
                 "RETRY LEVEL",
                 _font
             )
@@ -94,12 +94,14 @@ namespace MarioGame.src._Scenes
                 BackgroundColor = new Color(32, 32, 32),
                 HoverBackgroundColor = new Color(230, 0, 18),
                 BorderColor = Color.White,
-                TextColor = Color.White
-            });
+                TextColor = Color.White,
+                TextScale = 0.7f
+            };
+            _buttons.Add(retryButton);
 
-            // Main Menu button
-            _buttons.Add(new Button(
-                new Rectangle(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight),
+            // Main Menu button (right)
+            var menuButton = new Button(
+                new Rectangle(startX + 140, startY, buttonWidth, buttonHeight),
                 "MAIN MENU",
                 _font
             )
@@ -107,8 +109,10 @@ namespace MarioGame.src._Scenes
                 BackgroundColor = new Color(32, 32, 32),
                 HoverBackgroundColor = Color.White,
                 BorderColor = Color.White,
-                TextColor = Color.White
-            });
+                TextColor = Color.White,
+                TextScale = 0.7f
+            };
+            _buttons.Add(menuButton);
         }
 
         public void Update(GameTime gameTime)

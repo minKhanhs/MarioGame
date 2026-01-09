@@ -60,21 +60,30 @@ namespace MarioGame._Scenes
                 new Rectangle(startX, startY, buttonWidth, buttonHeight),
                 "RESUME",
                 _font
-            ));
+            )
+            {
+                TextScale = 0.7f
+            });
 
             // Restart Level button
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + buttonHeight + spacing, buttonWidth, buttonHeight),
                 "RESTART",
                 _font
-            ));
+            )
+            {
+                TextScale = 0.7f
+            });
 
             // Main Menu button
             _buttons.Add(new Button(
                 new Rectangle(startX, startY + (buttonHeight + spacing) * 2, buttonWidth, buttonHeight),
                 "MAIN MENU",
                 _font
-            ));
+            )
+            {
+                TextScale = 0.7f
+            });
         }
 
         public void Update(GameTime gameTime)
