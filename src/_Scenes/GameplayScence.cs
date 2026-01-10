@@ -34,6 +34,7 @@ namespace MarioGame._Scenes
 
         private bool _isLevelFinished = false;
         private float _finishTimer = 0f;
+        private bool _levelStatsAdded = false;
 
         private bool _isPaused = false;
         private KeyboardState _previousKeyboardState;
@@ -102,6 +103,7 @@ namespace MarioGame._Scenes
             {
                 if (_levelIndex == 1) GameSession.Instance.ResetSession();
                 LoadLevelFromFile(playerAnims);
+                _levelStatsAdded = false; // ← RESET FLAG khi load level mới
             }
 
             _isContentLoaded = true;
@@ -285,18 +287,25 @@ namespace MarioGame._Scenes
             if (_isLevelFinished)
             {
                 _finishTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                // 1. Cập nhật Session
-                GameSession.Instance.AddLevelStats(_hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated, 0);
+                
+                // 1. Cập nhật Session - CHỈ 1 LẦN
+                if (!_levelStatsAdded)
+                {
+                    GameSession.Instance.AddLevelStats(_hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated, _hud.ElapsedTime);
 
-                // 2. LƯU VÀO SLOT (Quan trọng)
-                SaveSlotManager.UpdateCurrentSlot(
-                    _levelIndex + 1, // Mở màn tiếp theo
-                    GameSession.Instance.TotalScore, // Điểm hiện tại
-                    _player.Lives,
-                    GameSession.Instance.TotalCoins,
-                    GameSession.Instance.TotalEnemiesDefeated,
-                    GameSession.Instance.TotalTime
-                );
+                    // 2. LƯU VÀO SLOT (Quan trọng)
+                    SaveSlotManager.UpdateCurrentSlot(
+                        _levelIndex + 1, // Mở màn tiếp theo
+                        GameSession.Instance.TotalScore, // Điểm hiện tại
+                        _player.Lives,
+                        GameSession.Instance.TotalCoins,
+                        GameSession.Instance.TotalEnemiesDefeated,
+                        GameSession.Instance.TotalTime
+                    );
+                    
+                    _levelStatsAdded = true; // ← ĐẶT CỜ ĐỂ KHÔNG CỘNG LẠI
+                }
+                
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false;

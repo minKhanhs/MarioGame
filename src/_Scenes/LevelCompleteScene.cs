@@ -37,7 +37,7 @@ namespace MarioGame.src._Scenes
         {
             _currentLevel = currentLevel;
             _totalLevels = totalLevels;
-            _finalScore = score;  // This is already the HUD calculated score
+            _finalScore = score;  // This is the HUD calculated score for this level only
             _finalCoins = coins;
             _bonusScore = bonusScore;  // Just for display purposes
             _enemiesDefeated = enemiesDefeated;
@@ -45,18 +45,15 @@ namespace MarioGame.src._Scenes
             _deathCount = deaths;  // Store deaths
             _levelTime = levelTime;
 
-            // Get session stats BEFORE adding this level
+            // Get session stats (which already includes this level's stats from GameplayScene)
             GameSession session = GameSession.Instance;
-            int prevScore = session.TotalScore;
-            int prevCoins = session.TotalCoins;
-            int prevEnemies = session.TotalEnemiesDefeated;
-            float prevTime = session.TotalTime;
 
-            // Calculate cumulative
-            _cumulativeScore = prevScore + _finalScore;
-            _cumulativeCoins = prevCoins + _finalCoins;
-            _cumulativeEnemies = prevEnemies + _enemiesDefeated;
-            _cumulativeTime = prevTime + _levelTime;
+            // Display cumulative as what's in GameSession right now
+            // NO NEED to add _finalScore again - it's already been added in GameplayScene!
+            _cumulativeScore = session.TotalScore;
+            _cumulativeCoins = session.TotalCoins;
+            _cumulativeEnemies = session.TotalEnemiesDefeated;
+            _cumulativeTime = session.TotalTime;
         }
 
         public void LoadContent()
@@ -157,11 +154,8 @@ namespace MarioGame.src._Scenes
             {
                 if (_currentLevel < _totalLevels)
                 {
-                    // Add this level's stats to GameSession
-                    float levelTimeOnly = _levelTime;  // Level time is already individual
-                    GameSession.Instance.AddLevelStats(_finalScore, _finalCoins, _enemiesDefeated, levelTimeOnly);
-                    
-                    // Go to next level
+                    // Go to next level WITHOUT adding stats again
+                    // (stats were already added in GameplayScene)
                     GameManager.Instance.ClearSavedGameState();
                     if (GameManager.Instance.GameMode == 2)
                     {
@@ -174,14 +168,10 @@ namespace MarioGame.src._Scenes
                 }
                 else
                 {
-                    // Add final level's stats to GameSession
-                    float levelTimeOnly = _levelTime;
-                    GameSession.Instance.AddLevelStats(_finalScore, _finalCoins, _enemiesDefeated, levelTimeOnly);
-                    
-                    // Game finished - go to name input scene
+                    // Game finished - stats were already added in GameplayScene
+                    // Get the final GameSession stats
                     GameManager.Instance.ClearSavedGameState();
                     
-                    // Get updated GameSession
                     GameSession session = GameSession.Instance;
                     
                     // Check achievements

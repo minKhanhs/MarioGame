@@ -165,12 +165,12 @@ namespace MarioGame.src._Scenes
                 if (currentKeyboardState.IsKeyDown(Keys.W) && !_previousKeyboardState.IsKeyDown(Keys.W))
                 {
                     _selectedControl--;
-                    if (_selectedControl < 0) _selectedControl = 5;
+                    if (_selectedControl < 0) _selectedControl = 7;
                 }
                 else if (currentKeyboardState.IsKeyDown(Keys.S) && !_previousKeyboardState.IsKeyDown(Keys.S))
                 {
                     _selectedControl++;
-                    if (_selectedControl > 5) _selectedControl = 0;
+                    if (_selectedControl > 7) _selectedControl = 0;
                 }
                 else if (currentKeyboardState.IsKeyDown(Keys.Enter) && !_previousKeyboardState.IsKeyDown(Keys.Enter))
                 {
@@ -338,11 +338,11 @@ namespace MarioGame.src._Scenes
             // Controls section card
             if (Game1.WhitePixel != null)
             {
-                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y, 1200, 310), Color.White);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y, 1200, 400), Color.White);
                 spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y, 1200, 2), Color.Black);
-                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y + 308, 1200, 2), Color.Black);
-                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y, 2, 310), Color.Black);
-                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40 + 1198, y, 2, 310), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y + 398, 1200, 2), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40, y, 2, 400), Color.Black);
+                spriteBatch.Draw(Game1.WhitePixel, new Rectangle(40 + 1198, y, 2, 400), Color.Black);
 
                 // Section header tag - positioned inside the card top
                 spriteBatch.Draw(Game1.WhitePixel, new Rectangle(50, y + 5, 200, 20), new Color(107, 179, 255));
@@ -357,7 +357,7 @@ namespace MarioGame.src._Scenes
             // Draw Player 2 controls
             DrawPlayerControls(spriteBatch, p2KeyMap, 2, rightColX, y, spacing);
 
-            y += 180;
+            y += 270;
         }
 
         private void DrawPlayerControls(SpriteBatch spriteBatch, Dictionary<EGameAction, Keys> keyMap, int playerIndex, int x, int y, int spacing)
@@ -368,12 +368,12 @@ namespace MarioGame.src._Scenes
 
             y += 30;
 
-            string[] actionNames = { "MOVE LEFT", "MOVE RIGHT", "JUMP" };
+            string[] actionNames = { "MOVE LEFT", "MOVE RIGHT", "JUMP", "FIRE" };
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
                 EGameAction action = (EGameAction)i;
-                int controlIndex = (playerIndex == 1 ? 0 : 3) + i;
+                int controlIndex = (playerIndex == 1 ? 0 : 4) + i;
                 Keys boundKey = keyMap.ContainsKey(action) ? keyMap[action] : Keys.None;
                 
                 bool isSelected = (_selectedControl == controlIndex);

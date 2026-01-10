@@ -171,6 +171,11 @@ namespace MarioGame.src._Scenes
                     {
                         string name = string.IsNullOrWhiteSpace(_inputName) ? "PLAYER" : _inputName;
                         SaveSlotManager.CreateNewWorld(name);
+
+                        // ← THÊM: Reset GameSession hoàn toàn để bắt đầu fresh
+                        GameSession.Instance.ResetSession();
+                        GameSession.Instance.ResetPermanentStats();
+
                         LoadAndStartGame(SaveSlotManager.CurrentSlot);
                     }
                     else if (key == Keys.Escape) _state = 0;

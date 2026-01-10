@@ -43,7 +43,14 @@ namespace MarioGame.src._Data
             var newSlot = new SaveSlot
             {
                 PlayerName = playerName,
-                LastPlayed = DateTime.Now
+                LastPlayed = DateTime.Now,
+                CurrentLevel = 1,
+                MaxLevelUnlocked = 1,
+                Score = 0,
+                Lives = 3,
+                Coins = 0,
+                EnemiesDefeated = 0,
+                PlayTime = 0f
             };
             Slots.Add(newSlot);
             CurrentSlot = newSlot;

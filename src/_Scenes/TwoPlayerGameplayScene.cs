@@ -52,6 +52,7 @@ namespace MarioGame._Scenes
 
         private bool _isLevelFinished = false;
         private float _finishTimer = 0f;
+        private bool _levelStatsAdded = false; // ← THÊM FLAG NÀY
         private bool _isPaused = false;
         private KeyboardState _previousKeyboardState;
         private bool _isResumingFromPause = false;
@@ -117,6 +118,7 @@ namespace MarioGame._Scenes
             else
             {
                 LoadLevelFromFile(playerAnims);
+                _levelStatsAdded = false; // Reset flag khi load level mới
             }
 
             _isContentLoaded = true;

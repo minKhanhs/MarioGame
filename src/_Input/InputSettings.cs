@@ -48,17 +48,17 @@ namespace MarioGame.src._Input
             P2_KeyMap[EGameAction.MoveLeft] = Keys.A;
             P2_KeyMap[EGameAction.MoveRight] = Keys.D;
             P2_KeyMap[EGameAction.Jump] = Keys.W;
-            // Run, Attack, Pause không cho rebind - fixed keys
+            // Run, Attack, Pause không cho phép rebind - fixed keys
             P2_KeyMap[EGameAction.Run] = Keys.LeftShift;
             P2_KeyMap[EGameAction.Attack] = Keys.H;
             P2_KeyMap[EGameAction.Pause] = Keys.Back;
         }
 
-        // Hàm đổi nút (Remap) - chỉ cho phép rebind MoveLeft, MoveRight, Jump
+        // Hàm đổi nút (Remap) - chỉ cho phép rebind MoveLeft, MoveRight, Jump, Attack
         public void RemapKey(int playerIndex, EGameAction action, Keys newKey)
         {
-            // Không cho phép rebind Run, Attack, Pause
-            if (action == EGameAction.Run || action == EGameAction.Attack || action == EGameAction.Pause)
+            // Không cho phép rebind Run, Pause
+            if (action == EGameAction.Run || action == EGameAction.Pause)
             {
                 System.Diagnostics.Debug.WriteLine($"[INPUT] Cannot rebind {action} - fixed key only");
                 return;

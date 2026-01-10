@@ -1,4 +1,4 @@
-﻿using MarioGame._Scenes;
+using MarioGame._Scenes;
 using MarioGame.src._Core;
 using MarioGame.src._Data;
 using MarioGame.src._Scenes;
@@ -16,7 +16,6 @@ namespace MarioGame.src._Scenes
         private SpriteFont _titleFont;
         private SpriteFont _buttonFont;
         private List<Button> _buttons;
-        private Button _helpButton;
 
         public void LoadContent()
         {
@@ -175,19 +174,6 @@ namespace MarioGame.src._Scenes
                 TextColor = Color.White,
                 TextScale = 0.65f
             });
-
-            // Help button (question mark) - top right corner
-            _helpButton = new Button(
-                new Rectangle(1280 - 80, 20, 60, 60),
-                "?",
-                _buttonFont
-            )
-            {
-                BackgroundColor = new Color(251, 208, 0),
-                HoverBackgroundColor = new Color(251, 208, 0),
-                BorderColor = Color.Black,
-                TextColor = Color.Black
-            };
         }
 
         public void Update(GameTime gameTime)
@@ -196,7 +182,6 @@ namespace MarioGame.src._Scenes
             {
                 button.Update(gameTime);
             }
-            _helpButton.Update(gameTime);
 
             // Handle button clicks
             if (_buttons[0].WasPressed) // 1 PLAYER
@@ -207,7 +192,7 @@ namespace MarioGame.src._Scenes
             else if (_buttons[1].WasPressed) // 2 PLAYERS
             {
                 GameManager.Instance.GameMode = 2;
-                // Truyền true vì là 2 người
+                // Truy?n true v� l� 2 ng??i
                 GameManager.Instance.ChangeScene(new SaveSlotScene(true));
             }
             else if (_buttons[2].WasPressed) // SETTINGS
@@ -233,10 +218,6 @@ namespace MarioGame.src._Scenes
             else if (_buttons[7].WasPressed) // CREDITS
             {
                 GameManager.Instance.ChangeScene(new CreditsScene());
-            }
-            else if (_helpButton.WasPressed) // HELP
-            {
-                GameManager.Instance.ChangeScene(new PlaceholderScene("HELP & CONTROLS - Coming Soon"));
             }
         }
 
@@ -264,9 +245,6 @@ namespace MarioGame.src._Scenes
             {
                 button.Draw(spriteBatch);
             }
-
-            // Draw help button with custom styling
-            _helpButton.Draw(spriteBatch);
 
             spriteBatch.End();
         }
