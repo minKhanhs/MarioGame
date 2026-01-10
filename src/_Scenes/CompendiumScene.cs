@@ -15,11 +15,15 @@ namespace MarioGame.src._Scenes
         private int _currentTab = 1; // 0 = Items, 1 = Monsters
         private int _selectedIndex = 0;
         private KeyboardState _previousKeyboardState;
+        private MouseState _previousMouseState;
         private bool _isContentLoaded = false;
         private float _textScale = 0.6f;
 
         // Textures for entries
         private Dictionary<string, Texture2D> _spriteTextures = new();
+
+        // Clickable rectangles for entries
+        private Dictionary<int, Rectangle> _entryRects = new();
 
         public class CompendiumEntry
         {
@@ -27,8 +31,8 @@ namespace MarioGame.src._Scenes
             public string Description { get; set; }
             public string Behavior { get; set; }
             public string Weakness { get; set; }
-            public int Defense { get; set; } // 0-100
-            public int Speed { get; set; }    // 0-100
+            public int Defense { get; set; }
+            public int Speed { get; set; }
             public string SpriteName { get; set; }
             public int EntryNumber { get; set; }
         }
@@ -183,7 +187,7 @@ namespace MarioGame.src._Scenes
         private void InitializeBackButton()
         {
             _backButton = new Button(
-                new Rectangle(1220, 680, 80, 30),
+                new Rectangle(50, 680, 80, 30),
                 "BACK",
                 _font
             )
@@ -201,7 +205,46 @@ namespace MarioGame.src._Scenes
             _backButton.Update(gameTime);
 
             KeyboardState currentKeyboardState = Keyboard.GetState();
+            MouseState currentMouseState = Mouse.GetState();
 
+            // Initialize mouse state on first frame
+            if (_previousMouseState == null || _previousMouseState == default)
+            {
+                _previousMouseState = currentMouseState;
+            }
+
+            // Handle mouse clicks
+            if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                List<CompendiumEntry> currentList = _currentTab == 1 ? _monsters : _items;
+
+                // Check tab clicks
+                Rectangle itemsTabRect = new Rectangle(30, 50, 70, 20);
+                Rectangle monstersTabRect = new Rectangle(110, 50, 100, 20);
+
+                if (itemsTabRect.Contains(currentMouseState.Position))
+                {
+                    _currentTab = 0;
+                    _selectedIndex = 0;
+                }
+                else if (monstersTabRect.Contains(currentMouseState.Position))
+                {
+                    _currentTab = 1;
+                    _selectedIndex = 0;
+                }
+
+                // Check entry clicks
+                foreach (var kvp in _entryRects)
+                {
+                    if (kvp.Value.Contains(currentMouseState.Position))
+                    {
+                        _selectedIndex = kvp.Key;
+                        break;
+                    }
+                }
+            }
+
+            // Keyboard fallback
             if (currentKeyboardState.IsKeyDown(Keys.Left) && !_previousKeyboardState.IsKeyDown(Keys.Left))
             {
                 _currentTab = (_currentTab - 1 + 2) % 2;
@@ -213,22 +256,13 @@ namespace MarioGame.src._Scenes
                 _selectedIndex = 0;
             }
 
-            List<CompendiumEntry> currentList = _currentTab == 1 ? _monsters : _items;
-            if (currentKeyboardState.IsKeyDown(Keys.Up) && !_previousKeyboardState.IsKeyDown(Keys.Up))
-            {
-                _selectedIndex = (_selectedIndex - 1 + currentList.Count) % currentList.Count;
-            }
-            else if (currentKeyboardState.IsKeyDown(Keys.Down) && !_previousKeyboardState.IsKeyDown(Keys.Down))
-            {
-                _selectedIndex = (_selectedIndex + 1) % currentList.Count;
-            }
-
             if (currentKeyboardState.IsKeyDown(Keys.Escape) || _backButton.WasPressed)
             {
                 GameManager.Instance.ChangeScene(new MenuScene());
             }
 
             _previousKeyboardState = currentKeyboardState;
+            _previousMouseState = currentMouseState;
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -255,7 +289,7 @@ namespace MarioGame.src._Scenes
             // Header
             spriteBatch.DrawString(_font, "COMPENDIUM", new Vector2(15, 10), Color.White, 0f, Vector2.Zero, 0.7f, SpriteEffects.None, 0f);
 
-            // Tab section
+            // Tab section (clickable)
             int tabY = 50;
             Color itemsColor = _currentTab == 0 ? new Color(236, 19, 19) : Color.Gray;
             Color monstersColor = _currentTab == 1 ? new Color(236, 19, 19) : Color.Gray;
@@ -264,30 +298,31 @@ namespace MarioGame.src._Scenes
             spriteBatch.DrawString(_font, "MONSTERS", new Vector2(110, tabY), monstersColor, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(0, tabY + 15, 280, 1), new Color(74, 42, 42));
 
-            // List
+            // List (clickable entries) - No scrolling
             List<CompendiumEntry> currentList = _currentTab == 1 ? _monsters : _items;
             int listY = 80;
             int itemHeight = 40;
 
-            for (int i = 0; i < currentList.Count && listY + (i * itemHeight) < 680; i++)
+            _entryRects.Clear();
+
+            for (int i = 0; i < currentList.Count; i++)
             {
                 int yPos = listY + (i * itemHeight);
                 bool isSelected = (i == _selectedIndex);
 
+                Rectangle entryRect = new Rectangle(5, yPos, 270, itemHeight - 2);
+                _entryRects[i] = entryRect;
+
                 if (isSelected)
                 {
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(5, yPos, 270, itemHeight - 2), new Color(236, 19, 19) * 0.3f);
+                    spriteBatch.Draw(Game1.WhitePixel, entryRect, new Color(236, 19, 19) * 0.3f);
                 }
 
                 Color nameColor = isSelected ? new Color(236, 19, 19) : Color.White;
-                
-                // Draw entry number
+
                 spriteBatch.DrawString(_font, $"#{currentList[i].EntryNumber:D2}", new Vector2(12, yPos + 3), Color.Gray, 0f, Vector2.Zero, _textScale * 0.7f, SpriteEffects.None, 0f);
-                
-                // Draw name
                 spriteBatch.DrawString(_font, currentList[i].Name, new Vector2(50, yPos + 3), nameColor, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
-                
-                // Draw type (category)
+
                 string category = _currentTab == 1 ? "Enemy" : "Item";
                 spriteBatch.DrawString(_font, category, new Vector2(50, yPos + 18), Color.Gray, 0f, Vector2.Zero, _textScale * 0.7f, SpriteEffects.None, 0f);
             }
@@ -301,15 +336,12 @@ namespace MarioGame.src._Scenes
                 int x = 300;
                 int y = 30;
 
-                // Header with entry number and name
                 spriteBatch.DrawString(_font, $"#{entry.EntryNumber:D2} {entry.Name}", new Vector2(x, y), new Color(236, 19, 19), 0f, Vector2.Zero, 0.8f, SpriteEffects.None, 0f);
                 y += 40;
 
-                // Description section
                 spriteBatch.DrawString(_font, "DESCRIPTION:", new Vector2(x, y), Color.White, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
                 y += 20;
 
-                // Wrap description text
                 string[] descriptionLines = WrapText(entry.Description, 80);
                 foreach (var line in descriptionLines)
                 {
@@ -319,12 +351,10 @@ namespace MarioGame.src._Scenes
 
                 y += 15;
 
-                // Stats section in two columns
                 int leftX = x;
                 int rightX = x + 500;
                 int statsY = y;
 
-                // Left column
                 spriteBatch.DrawString(_font, "BEHAVIOR:", new Vector2(leftX, statsY), Color.White, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
                 spriteBatch.DrawString(_font, entry.Behavior, new Vector2(leftX, statsY + 20), Color.Gray, 0f, Vector2.Zero, _textScale * 0.8f, SpriteEffects.None, 0f);
 
@@ -332,7 +362,6 @@ namespace MarioGame.src._Scenes
                 spriteBatch.DrawString(_font, "WEAKNESS:", new Vector2(leftX, statsY), Color.White, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
                 spriteBatch.DrawString(_font, entry.Weakness, new Vector2(leftX, statsY + 20), Color.Gray, 0f, Vector2.Zero, _textScale * 0.8f, SpriteEffects.None, 0f);
 
-                // Right column - Stats bars
                 statsY = y;
                 spriteBatch.DrawString(_font, "DEFENSE:", new Vector2(rightX, statsY), Color.White, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
                 DrawStatBar(spriteBatch, rightX, statsY + 20, entry.Defense);
@@ -341,7 +370,6 @@ namespace MarioGame.src._Scenes
                 spriteBatch.DrawString(_font, "SPEED:", new Vector2(rightX, statsY), Color.White, 0f, Vector2.Zero, _textScale, SpriteEffects.None, 0f);
                 DrawStatBar(spriteBatch, rightX, statsY + 20, entry.Speed);
 
-                // Sprite display - larger and centered on right side
                 int spriteX = rightX + 200;
                 int spriteY = statsY + 80;
                 int spriteSize = 120;
@@ -360,10 +388,8 @@ namespace MarioGame.src._Scenes
                 }
             }
 
-            // Navigation hint at bottom
-            spriteBatch.DrawString(_font, "UP/DOWN: Navigate  |  LEFT/RIGHT: Switch Tab  |  ESC: Back", new Vector2(300, 690), Color.Gray, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
+            spriteBatch.DrawString(_font, "CLICK: Select  |  LEFT/RIGHT: Switch Tab  |  ESC: Back", new Vector2(300, 690), Color.Gray, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
 
-            // Draw back button
             _backButton.Draw(spriteBatch);
         }
 
@@ -372,21 +398,17 @@ namespace MarioGame.src._Scenes
             int barWidth = 150;
             int barHeight = 12;
 
-            // Background
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, barWidth, barHeight), new Color(50, 50, 50));
 
-            // Fill (based on value 0-100)
             int fillWidth = (int)(barWidth * (value / 100f));
             Color barColor = value < 30 ? Color.Yellow : (value < 70 ? new Color(236, 19, 19) : new Color(100, 200, 100));
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, fillWidth, barHeight), barColor);
 
-            // Border
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, barWidth, 2), Color.White);
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y + barHeight - 2, barWidth, 2), Color.White);
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x, y, 2, barHeight), Color.White);
             spriteBatch.Draw(Game1.WhitePixel, new Rectangle(x + barWidth - 2, y, 2, barHeight), Color.White);
 
-            // Value text
             spriteBatch.DrawString(_font, $"{value}", new Vector2(x + barWidth + 10, y - 2), Color.White, 0f, Vector2.Zero, _textScale * 0.7f, SpriteEffects.None, 0f);
         }
 

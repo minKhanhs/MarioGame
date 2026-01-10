@@ -15,6 +15,7 @@ namespace MarioGame.src._Scenes
         private Button _backButton;
         private Button _saveButton;
         private KeyboardState _previousKeyboardState;
+        private MouseState _previousMouseState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
 
@@ -24,6 +25,9 @@ namespace MarioGame.src._Scenes
         private int _scrollOffset = 0; // For scrolling content
         private int _selectedControl = -1; // For rebinding controls
         private bool _isWaitingForInput = false;
+        
+        // Clickable rectangles for control binding
+        private Dictionary<int, Rectangle> _controlRects = new();
 
         public void LoadContent()
         {
@@ -82,10 +86,12 @@ namespace MarioGame.src._Scenes
             _saveButton.Update(gameTime);
 
             KeyboardState currentKeyboardState = Keyboard.GetState();
+            MouseState currentMouseState = Mouse.GetState();
 
             if (_isFirstUpdate)
             {
                 _previousKeyboardState = currentKeyboardState;
+                _previousMouseState = currentMouseState;
                 _isFirstUpdate = false;
                 return;
             }
@@ -98,8 +104,8 @@ namespace MarioGame.src._Scenes
                     if (!_previousKeyboardState.IsKeyDown(key))
                     {
                         // Key was just pressed - rebind it
-                        int playerIndex = (_selectedControl < 3) ? 1 : 2;
-                        int actionIndex = _selectedControl % 3;
+                        int playerIndex = (_selectedControl < 4) ? 1 : 2;
+                        int actionIndex = _selectedControl % 4;
                         RemapKeyForPlayer(playerIndex, actionIndex, key);
 
                         _isWaitingForInput = false;
@@ -108,7 +114,22 @@ namespace MarioGame.src._Scenes
                 }
 
                 _previousKeyboardState = currentKeyboardState;
+                _previousMouseState = currentMouseState;
                 return;
+            }
+
+            // Handle mouse click on control rectangles
+            if (currentMouseState.LeftButton == ButtonState.Pressed && _previousMouseState.LeftButton == ButtonState.Released)
+            {
+                foreach (var kvp in _controlRects)
+                {
+                    if (kvp.Value.Contains(currentMouseState.Position))
+                    {
+                        _selectedControl = kvp.Key;
+                        _isWaitingForInput = true;
+                        break;
+                    }
+                }
             }
 
             // Back button
@@ -116,6 +137,7 @@ namespace MarioGame.src._Scenes
             {
                 GameManager.Instance.ChangeScene(new MenuScene());
                 _previousKeyboardState = currentKeyboardState;
+                _previousMouseState = currentMouseState;
                 return;
             }
 
@@ -129,13 +151,13 @@ namespace MarioGame.src._Scenes
             // Scroll up/down to navigate content
             if (currentKeyboardState.IsKeyDown(Keys.Up) && !_previousKeyboardState.IsKeyDown(Keys.Up))
             {
-                _scrollOffset -= 30; // Scroll up
+                _scrollOffset -= 30;
                 if (_scrollOffset < 0) _scrollOffset = 0;
             }
             else if (currentKeyboardState.IsKeyDown(Keys.Down) && !_previousKeyboardState.IsKeyDown(Keys.Down))
             {
-                _scrollOffset += 30; // Scroll down
-                if (_scrollOffset > 300) _scrollOffset = 300; // Max scroll
+                _scrollOffset += 30;
+                if (_scrollOffset > 300) _scrollOffset = 300;
             }
 
             // Audio controls (Music volume)
@@ -179,6 +201,7 @@ namespace MarioGame.src._Scenes
             }
 
             _previousKeyboardState = currentKeyboardState;
+            _previousMouseState = currentMouseState;
         }
 
         private void RemapKeyForPlayer(int playerIndex, int actionIndex, Keys newKey)
@@ -234,7 +257,7 @@ namespace MarioGame.src._Scenes
                 }
 
                 // Draw scroll hint
-                spriteBatch.DrawString(_font, "UP/DOWN: Scroll  |  LEFT/RIGHT: Volume  |  E: Select Control  |  W/S: Navigate  |  ENTER: Rebind", 
+                spriteBatch.DrawString(_font, "UP/DOWN: Scroll  |  LEFT/RIGHT: Volume", 
                     new Vector2(300, 660), new Color(100, 100, 100), 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
             }
 
@@ -377,21 +400,33 @@ namespace MarioGame.src._Scenes
                 Keys boundKey = keyMap.ContainsKey(action) ? keyMap[action] : Keys.None;
                 
                 bool isSelected = (_selectedControl == controlIndex);
+                bool isWaiting = (_isWaitingForInput && isSelected);
                 Color labelColor = isSelected ? new Color(230, 0, 18) : Color.Black;
 
                 // Action name
                 spriteBatch.DrawString(_font, actionNames[i], new Vector2(x, y), labelColor, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
 
-                // Key display
-                string keyText = _isWaitingForInput && isSelected ? "PRESS KEY..." : boundKey.ToString();
-                Color keyColor = _isWaitingForInput && isSelected ? new Color(230, 0, 18) : Color.Gray;
-                
-                if (Game1.WhitePixel != null && isSelected)
+                // Key display rectangle - clickable
+                Rectangle keyRect = new Rectangle(x + 185, y - 2, 150, 22);
+                _controlRects[controlIndex] = keyRect;
+
+                // Draw key box background
+                Color boxColor = isWaiting ? new Color(230, 0, 18) : (isSelected ? new Color(230, 0, 18) * 0.2f : Color.White);
+                if (Game1.WhitePixel != null)
                 {
-                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle((int)(x + 180), y - 2, 150, 22), new Color(230, 0, 18) * 0.2f);
+                    spriteBatch.Draw(Game1.WhitePixel, keyRect, boxColor);
+                    // Draw border
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(keyRect.X, keyRect.Y, keyRect.Width, 1), new Color(100, 100, 100));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(keyRect.X, keyRect.Bottom - 1, keyRect.Width, 1), new Color(100, 100, 100));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(keyRect.X, keyRect.Y, 1, keyRect.Height), new Color(100, 100, 100));
+                    spriteBatch.Draw(Game1.WhitePixel, new Rectangle(keyRect.Right - 1, keyRect.Y, 1, keyRect.Height), new Color(100, 100, 100));
                 }
 
-                spriteBatch.DrawString(_font, keyText, new Vector2(x + 185, y), keyColor, 0f, Vector2.Zero, 0.45f, SpriteEffects.None, 0f);
+                // Key text
+                string keyText = isWaiting ? "PRESS KEY..." : boundKey.ToString();
+                Color keyColor = isWaiting ? new Color(230, 0, 18) : Color.Gray;
+                
+                spriteBatch.DrawString(_font, keyText, new Vector2(x + 190, y), keyColor, 0f, Vector2.Zero, 0.45f, SpriteEffects.None, 0f);
 
                 y += spacing;
             }

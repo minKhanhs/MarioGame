@@ -40,6 +40,9 @@ namespace MarioGame
             GameManager.Instance.GraphicsDevice = GraphicsDevice;
             SoundManager.Instance.LoadSong("TitleTheme", "audio/titleMusic");
 
+            // Force initialize CareerStats to load career file early (avoid timing issues)
+            var _ = CareerStats.TotalCoins;
+
             // Khởi động vào Menu hoặc vào thẳng Level 1
             // GameManager.Instance.ChangeScene(new MenuScene()); 
 

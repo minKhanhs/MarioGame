@@ -17,8 +17,11 @@ namespace MarioGame.src._Scenes
         private Button _backButton;
         private List<Achievement> _achievements;
         private KeyboardState _previousKeyboardState;
+        private MouseState _previousMouseState;
         private bool _isFirstUpdate = true;
         private bool _isContentLoaded = false;
+        private float _scrollY = 0;
+        private float _targetScrollY = 0;
         private int _scrollOffset = 0;
 
         public void LoadContent()
@@ -63,13 +66,37 @@ namespace MarioGame.src._Scenes
             _backButton.Update(gameTime);
 
             KeyboardState currentKeyboardState = Keyboard.GetState();
+            MouseState currentMouseState = Mouse.GetState();
 
             if (_isFirstUpdate)
             {
                 _previousKeyboardState = currentKeyboardState;
+                _previousMouseState = currentMouseState;
                 _isFirstUpdate = false;
                 return;
             }
+
+            // Handle mouse wheel scroll
+            if (currentMouseState.ScrollWheelValue != _previousMouseState.ScrollWheelValue)
+            {
+                int scrollDelta = currentMouseState.ScrollWheelValue - _previousMouseState.ScrollWheelValue;
+                _targetScrollY -= scrollDelta * 0.5f;
+
+                // Clamp scroll
+                int cardHeight = 100;
+                int cardSpacing = 30;
+                int cardsPerRow = 2;
+                int rows = (_achievements.Count + cardsPerRow - 1) / cardsPerRow;
+                int totalHeight = rows * (cardHeight + cardSpacing);
+                int viewHeight = 435;
+
+                if (_targetScrollY < 0) _targetScrollY = 0;
+                if (_targetScrollY > totalHeight - viewHeight)
+                    _targetScrollY = totalHeight - viewHeight;
+            }
+
+            // Smooth scroll lerp
+            _scrollY = MathHelper.Lerp(_scrollY, _targetScrollY, 0.1f);
 
             // Back button
             if (currentKeyboardState.IsKeyDown(Keys.Escape) || _backButton.WasPressed)
@@ -81,16 +108,24 @@ namespace MarioGame.src._Scenes
             // Scroll with arrow keys
             if (currentKeyboardState.IsKeyDown(Keys.Up) && !_previousKeyboardState.IsKeyDown(Keys.Up))
             {
-                _scrollOffset -= 20;
-                if (_scrollOffset < 0) _scrollOffset = 0;
+                _targetScrollY -= 20;
+                if (_targetScrollY < 0) _targetScrollY = 0;
             }
             else if (currentKeyboardState.IsKeyDown(Keys.Down) && !_previousKeyboardState.IsKeyDown(Keys.Down))
             {
-                _scrollOffset += 20;
-                if (_scrollOffset > 300) _scrollOffset = 300;
+                _targetScrollY += 20;
+                int cardHeight = 100;
+                int cardSpacing = 30;
+                int cardsPerRow = 2;
+                int rows = (_achievements.Count + cardsPerRow - 1) / cardsPerRow;
+                int totalHeight = rows * (cardHeight + cardSpacing);
+                int viewHeight = 435;
+                if (_targetScrollY > totalHeight - viewHeight)
+                    _targetScrollY = totalHeight - viewHeight;
             }
 
             _previousKeyboardState = currentKeyboardState;
+            _previousMouseState = currentMouseState;
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -211,7 +246,7 @@ namespace MarioGame.src._Scenes
             spriteBatch.GraphicsDevice.ScissorRectangle = clippingRect;
             spriteBatch.Begin(samplerState: SamplerState.PointClamp, rasterizerState: new RasterizerState { ScissorTestEnable = true });
 
-            int currentY = startY - _scrollOffset;
+            int currentY = startY - (int)_scrollY;
 
             for (int i = 0; i < _achievements.Count; i++)
             {

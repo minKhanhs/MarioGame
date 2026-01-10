@@ -51,8 +51,8 @@ namespace MarioGame.src._Scenes
             // Display cumulative as what's in GameSession right now
             // NO NEED to add _finalScore again - it's already been added in GameplayScene!
             _cumulativeScore = session.TotalScore;
-            _cumulativeCoins = session.TotalCoins;
-            _cumulativeEnemies = session.TotalEnemiesDefeated;
+            _cumulativeCoins = session.TotalCoinsThisGame;
+            _cumulativeEnemies = session.TotalEnemiesThisGame;
             _cumulativeTime = session.TotalTime;
         }
 
@@ -168,29 +168,28 @@ namespace MarioGame.src._Scenes
                 }
                 else
                 {
-                    // Game finished - stats were already added in GameplayScene
-                    // Get the final GameSession stats
+                    // Game finished - show PlayerNameInputScene ?? l?u record
                     GameManager.Instance.ClearSavedGameState();
                     
                     GameSession session = GameSession.Instance;
                     
-                    // Check achievements
+                    // Check achievements s? d?ng CAREER stats
                     AchievementManager.Instance.CheckAndUnlockAchievements(
-                        session.TotalCoins,
-                        session.TotalEnemiesDefeated,
-                        session.TotalScore,
-                        session.TotalTime,
-                        session.TotalEnemiesDefeated,
-                        session.TotalCoins,
-                        session.TotalScore,
+                        _finalCoins,                           // coins level này
+                        _enemiesDefeated,                      // enemies level này
+                        session.TotalScore,                    // total score game này
+                        session.TotalTime,                     // total time game này
+                        CareerStats.TotalEnemiesDefeated,      // CAREER enemies (t?t c? l?n ch?i)
+                        CareerStats.TotalCoins,                // CAREER coins (t?t c? l?n ch?i)
+                        session.TotalScore,                    // score game này
                         false
                     );
                     AchievementManager.Instance.SaveAll();
                     
                     GameManager.Instance.ChangeScene(new PlayerNameInputScene(
                         session.TotalScore, 
-                        session.TotalCoins, 
-                        session.TotalEnemiesDefeated, 
+                        session.TotalCoinsThisGame, 
+                        session.TotalEnemiesThisGame, 
                         _currentLevel, 
                         session.TotalTime, 
                         _currentLevel

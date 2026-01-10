@@ -35,18 +35,19 @@ namespace MarioGame.src._Scenes
 
         private void CheckAchievements()
         {
-            // Get current session stats (before adding this level)
+            // Get current session stats
             GameSession session = GameSession.Instance;
 
+            // Sử dụng CAREER stats để tính achievement (tất cả lần chơi)
             AchievementManager.Instance.CheckAndUnlockAchievements(
-                _finalCoins,           // coins this level
-                _enemiesDefeated,      // enemies this level
-                _finalScore,           // score this level
-                0,                     // level time (not available in GameOver)
-                session.TotalEnemiesDefeated,  // total enemies
-                session.TotalCoins,             // total coins
-                session.TotalScore,             // total score
-                true                            // took damage (game over = took damage)
+                _finalCoins,                           // coins level này (không dùng)
+                _enemiesDefeated,                      // enemies level này (không dùng)
+                _finalScore,                           // score level này
+                0,                                     // level time (not available in GameOver)
+                CareerStats.TotalEnemiesDefeated,      // CAREER total enemies (tất cả lần chơi)
+                CareerStats.TotalCoins,                // CAREER total coins (tất cả lần chơi)
+                session.TotalScore,                    // total score game này
+                true                                   // took damage (game over = took damage)
             );
 
             AchievementManager.Instance.SaveAll();

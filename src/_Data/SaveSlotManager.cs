@@ -72,5 +72,15 @@ namespace MarioGame.src._Data
 
             SaveSlots();
         }
+
+        public static void DeleteSlot(int index)
+        {
+            if (index >= 0 && index < Slots.Count)
+            {
+                Slots.RemoveAt(index);
+                SaveSlots();
+                System.Diagnostics.Debug.WriteLine($"[SAVE] Deleted slot at index {index}");
+            }
+        }
     }
 }

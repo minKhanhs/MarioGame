@@ -93,39 +93,42 @@ namespace MarioGame.src._Scenes
             MouseState mouse = Mouse.GetState();
             KeyboardState kb = Keyboard.GetState();
 
-            // 1. Xử lý Scroll
-            int scrollWheel = mouse.ScrollWheelValue - _prevMouse.ScrollWheelValue;
-            _targetScrollY += scrollWheel * 0.5f;
-
-            int viewHeight = 720 - START_Y - 50;
-            int totalItems = SaveSlotManager.Slots.Count;
-            _contentHeight = (totalItems * (ITEM_HEIGHT + ITEM_GAP)) + CREATE_BTN_HEIGHT + 50;
-
-            int maxScroll = 0;
-            if (_contentHeight > viewHeight) maxScroll = -(_contentHeight - viewHeight);
-
-            if (_targetScrollY > 0) _targetScrollY = 0;
-            if (_targetScrollY < maxScroll) _targetScrollY = maxScroll;
-            _scrollY = MathHelper.Lerp(_scrollY, _targetScrollY, 0.1f);
-
             // 2. Xử lý Click
             if (mouse.LeftButton == ButtonState.Pressed && _prevMouse.LeftButton == ButtonState.Released)
             {
                 int centerX = 640;
                 int width = 900;
-                int listY = (int)_scrollY + START_Y;
+                int listY = START_Y;
 
                 // Check click các slot hiện có
                 for (int i = 0; i < SaveSlotManager.Slots.Count; i++)
                 {
                     Rectangle slotRect = new Rectangle(centerX - width / 2, listY + i * (ITEM_HEIGHT + ITEM_GAP), width, ITEM_HEIGHT);
-                    Rectangle playBtnRect = new Rectangle(slotRect.Right - 150, slotRect.Y, 150, slotRect.Height);
+                    
+                    // Layout: [PLAY] [DELETE] nằm bên phải
+                    int buttonsWidth = 300;
+                    int buttonsStartX = slotRect.Right - buttonsWidth - 20;
+                    Rectangle playBtnRect = new Rectangle(buttonsStartX, slotRect.Y, 150, slotRect.Height);
+                    Rectangle deleteBtnRect = new Rectangle(buttonsStartX + 150, slotRect.Y, 150, slotRect.Height);
 
-                    // Chỉ nhận click nếu nằm trong vùng hiển thị (đơn giản hóa)
-                    if (playBtnRect.Contains(mouse.Position) && slotRect.Y > 50 && slotRect.Bottom < 700)
+                    // Check click
+                    if (slotRect.Y > 50 && slotRect.Bottom < 700)
                     {
-                        LoadAndStartGame(SaveSlotManager.Slots[i]);
-                        return;
+                        // PLAY Button
+                        if (playBtnRect.Contains(mouse.Position))
+                        {
+                            LoadAndStartGame(SaveSlotManager.Slots[i]);
+                            return;
+                        }
+
+                        // DELETE Button
+                        if (deleteBtnRect.Contains(mouse.Position))
+                        {
+                            SaveSlotManager.DeleteSlot(i);
+                            SaveSlotManager.LoadSlots();
+                            _prevMouse = mouse; // ← Update _prevMouse trước khi return
+                            return;
+                        }
                     }
                 }
 
@@ -172,11 +175,13 @@ namespace MarioGame.src._Scenes
                         string name = string.IsNullOrWhiteSpace(_inputName) ? "PLAYER" : _inputName;
                         SaveSlotManager.CreateNewWorld(name);
 
-                        // ← THÊM: Reset GameSession hoàn toàn để bắt đầu fresh
+                        // Tạo world MỚI:
+                        // 1. Reset SESSION stats (TotalScore, TotalCoinsThisGame, etc)
+                        // 2. Reload CAREER stats từ file (để giữ nguyên từ các lần chơi trước)
                         GameSession.Instance.ResetSession();
-                        GameSession.Instance.ResetPermanentStats();
 
-                        LoadAndStartGame(SaveSlotManager.CurrentSlot);
+                        // Tải game và start
+                        LoadAndStartGame(SaveSlotManager.CurrentSlot, isNewWorld: true);
                     }
                     else if (key == Keys.Escape) _state = 0;
                     else if (_inputName.Length < 12 && key >= Keys.A && key <= Keys.Z)
@@ -188,18 +193,23 @@ namespace MarioGame.src._Scenes
             _prevKeyboard = kb;
         }
 
-        private void LoadAndStartGame(SaveSlot slot)
+        private void LoadAndStartGame(SaveSlot slot, bool isNewWorld = false)
         {
             SaveSlotManager.CurrentSlot = slot;
-            GameSession.Instance.ResetSession();
-
-            // Load các chỉ số cũ để cộng dồn
-            GameSession.Instance.TotalScore = slot.Score;
-            GameSession.Instance.TotalCoins = slot.Coins;
-            GameSession.Instance.TotalEnemiesDefeated = slot.EnemiesDefeated;
-            GameSession.Instance.TotalTime = slot.PlayTime;
-
-            // --- [QUAN TRỌNG] SETUP GAME MODE VÀ CHUYỂN SCENE ---
+            
+            // Nếu tải world CŨ: reset session stats nhưng restore từ SaveSlot
+            // Nếu tạo world MỚI: session đã được reset ở trên, chỉ cần start game
+            if (!isNewWorld)
+            {
+                // Load world CŨ: restore session từ SaveSlot
+                GameSession.Instance.ResetSession();
+                GameSession.Instance.TotalScore = slot.Score;
+                GameSession.Instance.CurrentLevel = slot.CurrentLevel;
+                GameSession.Instance.MaxLevelReached = slot.MaxLevelUnlocked;
+            }
+            // Nếu world mới, không set thêm gì - session đã reset và career stats sẽ từ file
+            
+            // --- SETUP GAME MODE VÀ CHUYỂN SCENE ---
             if (_isTwoPlayerMode)
             {
                 GameManager.Instance.GameMode = 2;
@@ -222,8 +232,8 @@ namespace MarioGame.src._Scenes
             // 1. HEADER
             DrawHeader(sb);
 
-            // 2. LIST
-            int startDrawY = (int)_scrollY + START_Y;
+            // 2. LIST (No scrolling)
+            int startDrawY = START_Y;
             int centerX = 640;
             int width = 900;
 
@@ -245,12 +255,12 @@ namespace MarioGame.src._Scenes
                 DrawCreateButton(sb, createRect);
             }
 
-            // Che phần scroll trôi lên header
+            // Che phần trôi lên header
             sb.Draw(_pixel, new Rectangle(0, 0, 1280, 140), BG_DARK);
             DrawHeader(sb); // Vẽ lại header đè lên
 
             // Footer & Back Button
-            sb.DrawString(_font, "PRESS ESC TO RETURN  |  SCROLL TO VIEW MORE", new Vector2(450, 680), NES_GRAY, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
+            sb.DrawString(_font, "PRESS ESC TO RETURN", new Vector2(450, 680), NES_GRAY, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
             _backButton.Draw(sb);
 
             // Popup
@@ -278,8 +288,17 @@ namespace MarioGame.src._Scenes
         private void DrawSlotItem(SpriteBatch sb, Rectangle bounds, SaveSlot slot, int index)
         {
             MouseState ms = Mouse.GetState();
-            Rectangle btnRect = new Rectangle(bounds.Right - 150, bounds.Y, 150, bounds.Height);
-            bool isHoverBtn = btnRect.Contains(ms.Position);
+            
+            // Layout: [PLAY] [DELETE] nằm bên phải, căn giữa
+            // Tổng chiều rộng 2 nút = 300px (mỗi nút 150px)
+            int buttonsWidth = 300;
+            int buttonsStartX = bounds.Right - buttonsWidth - 20; // 20px padding từ cạnh phải
+            
+            Rectangle playBtnRect = new Rectangle(buttonsStartX, bounds.Y, 150, bounds.Height);
+            Rectangle deleteBtnRect = new Rectangle(buttonsStartX + 150, bounds.Y, 150, bounds.Height);
+            
+            bool isHoverPlayBtn = playBtnRect.Contains(ms.Position);
+            bool isHoverDeleteBtn = deleteBtnRect.Contains(ms.Position);
 
             // Shadow
             sb.Draw(_pixel, new Rectangle(bounds.X + 8, bounds.Y + 8, bounds.Width, bounds.Height), Color.Black * 0.5f);
@@ -300,7 +319,7 @@ namespace MarioGame.src._Scenes
             // Info
             int infoX = thumb.Right + 20;
 
-            // File Tag (A, B, C...) - Dùng index để tạo chữ cái giả lập
+            // File Tag (A, B, C...)
             string fileTag = $"FILE {(char)('A' + (index % 26))}";
             sb.Draw(_pixel, new Rectangle(infoX, bounds.Y + 20, 60, 20), NES_RED);
             sb.DrawString(_font, fileTag, new Vector2(infoX + 5, bounds.Y + 24), NES_WHITE, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
@@ -309,7 +328,7 @@ namespace MarioGame.src._Scenes
             sb.DrawString(_font, slot.PlayerName.ToUpper(), new Vector2(infoX + 70, bounds.Y + 20), NES_WHITE, 0f, Vector2.Zero, 0.7f, SpriteEffects.None, 0f);
 
             // Date
-            sb.DrawString(_font, slot.LastPlayed.ToString("yyyy-MM-dd HH:mm"), new Vector2(btnRect.Left - 180, bounds.Y + 25), NES_GRAY, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
+            sb.DrawString(_font, slot.LastPlayed.ToString("yyyy-MM-dd HH:mm"), new Vector2(playBtnRect.Left - 180, bounds.Y + 25), NES_GRAY, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
 
             // Stats
             sb.DrawString(_font, $"SCORE: {slot.Score:D6}", new Vector2(infoX, bounds.Y + 60), NES_GRAY, 0f, Vector2.Zero, 0.4f, SpriteEffects.None, 0f);
@@ -317,7 +336,7 @@ namespace MarioGame.src._Scenes
 
             // Progress Bar
             int barY = bounds.Y + 100;
-            int barW = btnRect.Left - infoX - 40;
+            int barW = playBtnRect.Left - infoX - 40;
             sb.DrawString(_font, $"{(int)(slot.ProgressPercent * 100)}%", new Vector2(infoX + barW + 5, barY), NES_GRAY, 0f, Vector2.Zero, 0.35f, SpriteEffects.None, 0f);
 
             Rectangle barBg = new Rectangle(infoX, barY, barW, 10);
@@ -326,11 +345,17 @@ namespace MarioGame.src._Scenes
             int fill = (int)(barBg.Width * slot.ProgressPercent);
             if (fill > 0) sb.Draw(_pixel, new Rectangle(barBg.X, barBg.Y, fill, barBg.Height), NES_RED);
 
-            // Play Button
-            sb.Draw(_pixel, btnRect, isHoverBtn ? NES_RED : NES_WHITE);
-            sb.Draw(_pixel, new Rectangle(btnRect.X, btnRect.Y, 4, btnRect.Height), NES_WHITE);
-            Color txtColor = isHoverBtn ? NES_WHITE : NES_BLACK;
-            sb.DrawString(_font, "PLAY", new Vector2(btnRect.Center.X - 30, btnRect.Center.Y - 10), txtColor, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
+            // PLAY Button (bên trái)
+            sb.Draw(_pixel, playBtnRect, isHoverPlayBtn ? NES_RED : NES_WHITE);
+            sb.Draw(_pixel, new Rectangle(playBtnRect.X, playBtnRect.Y, 4, playBtnRect.Height), NES_WHITE);
+            Color playTextColor = isHoverPlayBtn ? NES_WHITE : NES_BLACK;
+            sb.DrawString(_font, "PLAY", new Vector2(playBtnRect.Center.X - 30, playBtnRect.Center.Y - 10), playTextColor, 0f, Vector2.Zero, 0.6f, SpriteEffects.None, 0f);
+
+            // DELETE Button (bên phải)
+            sb.Draw(_pixel, deleteBtnRect, isHoverDeleteBtn ? new Color(150, 0, 0) : new Color(100, 100, 100));
+            sb.Draw(_pixel, new Rectangle(deleteBtnRect.X, deleteBtnRect.Y, 4, deleteBtnRect.Height), new Color(200, 100, 100));
+            Color deleteTextColor = isHoverDeleteBtn ? Color.White : NES_GRAY;
+            sb.DrawString(_font, "DELETE", new Vector2(deleteBtnRect.Center.X - 35, deleteBtnRect.Center.Y - 10), deleteTextColor, 0f, Vector2.Zero, 0.5f, SpriteEffects.None, 0f);
         }
 
         private void DrawCreateButton(SpriteBatch sb, Rectangle bounds)

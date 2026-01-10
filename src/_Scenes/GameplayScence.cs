@@ -101,7 +101,9 @@ namespace MarioGame._Scenes
             }
             else
             {
-                if (_levelIndex == 1) GameSession.Instance.ResetSession();
+                // Load level mới hoặc từ slot
+                // ✅ ResetSession() đã được gọi ở SaveSlotScene trước khi chuyển scene
+                // Không gọi lại ở đây để tránh reset CareerStats
                 LoadLevelFromFile(playerAnims);
                 _levelStatsAdded = false; // ← RESET FLAG khi load level mới
             }
@@ -298,8 +300,8 @@ namespace MarioGame._Scenes
                         _levelIndex + 1, // Mở màn tiếp theo
                         GameSession.Instance.TotalScore, // Điểm hiện tại
                         _player.Lives,
-                        GameSession.Instance.TotalCoins,
-                        GameSession.Instance.TotalEnemiesDefeated,
+                        GameSession.Instance.TotalCoinsThisGame,
+                        GameSession.Instance.TotalEnemiesThisGame,
                         GameSession.Instance.TotalTime
                     );
                     

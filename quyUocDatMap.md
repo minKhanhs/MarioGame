@@ -8,7 +8,7 @@ Ký tự ?: Hộp hỏi chấm (Ra nấm/tiền)
 
 Ký tự T: Ống cống
 
-Ký tự P: Piranha Plant (Bạn cần đảm bảo MapLoader nhận diện chữ này, hoặc đặt nó trùng vị trí với T)
+Ký tự P: Piranha Plant
 
 Ký tự M: MUSHROOM (Nấm)
 

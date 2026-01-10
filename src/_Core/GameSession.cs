@@ -1,29 +1,26 @@
 namespace MarioGame.src._Core
 {
     /// <summary>
-    /// Tracks cumulative statistics across all levels in a single game session
-    /// 
-    /// PERMANENT STATS (NEVER reset, saved to file):
-    /// - TotalCoins
-    /// - TotalEnemiesDefeated
+    /// Tracks statistics for CURRENT game session ONLY
+    /// Session stats ???c reset khi t?o world m?i
     /// 
     /// SESSION STATS (Reset when starting new game):
-    /// - TotalScore
-    /// - TotalTime
-    /// - CurrentLevel
-    /// - MaxLevelReached
+    /// - TotalScore: ?i?m c?ng d?n trong game hi?n t?i
+    /// - TotalTime: Th?i gian ch?i trong game hi?n t?i
+    /// - TotalCoinsThisGame: Coins ?n ???c trong game hi?n t?i
+    /// - TotalEnemiesThisGame: Quái gi?t trong game hi?n t?i
+    /// 
+    /// CAREER STATS: Xem CareerStats.cs (static class riêng)
     /// </summary>
     public class GameSession
     {
-        // SESSION STATS (reset per game)
+        // ========== SESSION STATS (reset per game) ==========
         public int TotalScore { get; set; }
         public float TotalTime { get; set; }
         public int CurrentLevel { get; set; }
         public int MaxLevelReached { get; set; }
-
-        // PERMANENT STATS (NEVER reset - these are career stats)
-        public int TotalCoins { get; set; }
-        public int TotalEnemiesDefeated { get; set; }
+        public int TotalCoinsThisGame { get; set; }
+        public int TotalEnemiesThisGame { get; set; }
 
         private static GameSession _instance;
         private const string SESSION_FILE = "Content/data/gamesession.json";
@@ -45,31 +42,33 @@ namespace MarioGame.src._Core
             TotalTime = 0f;
             CurrentLevel = 1;
             MaxLevelReached = 1;
-
-            // Permanent stats will be loaded from file
-            TotalCoins = 0;
-            TotalEnemiesDefeated = 0;
+            TotalCoinsThisGame = 0;
+            TotalEnemiesThisGame = 0;
 
             LoadSession();
         }
 
-        public void AddLevelStats(int score, int coins, int enemies, float time)
+        /// <summary>
+        /// G?i khi hoàn thành 1 level - c?ng ?i?m vào session và career stats
+        /// </summary>
+        public void AddLevelStats(int score, int coinsThisLevel, int enemiesThisLevel, float time)
         {
-            // Add to permanent stats
-            TotalCoins += coins;
-            TotalEnemiesDefeated += enemies;
-
-            // Add to session stats
+            // 1. C?ng vào SESSION stats
             TotalScore += score;
             TotalTime += time;
+            TotalCoinsThisGame += coinsThisLevel;
+            TotalEnemiesThisGame += enemiesThisLevel;
+
+            // 2. C?ng vào CAREER stats (static, không reset)
+            CareerStats.AddStats(coinsThisLevel, enemiesThisLevel);
 
             SaveSession();
-            System.Diagnostics.Debug.WriteLine($"[SESSION] Updated - Score: {TotalScore}, Coins: {TotalCoins}, Enemies: {TotalEnemiesDefeated}");
+            System.Diagnostics.Debug.WriteLine($"[SESSION] AddLevelStats - Session Score: {TotalScore}, Coins: {TotalCoinsThisGame}, Enemies: {TotalEnemiesThisGame}");
         }
 
         /// <summary>
         /// Reset only SESSION stats when starting a new game
-        /// PERMANENT stats (TotalCoins, TotalEnemiesDefeated) are NEVER reset
+        /// Career stats NEVER reset (managed by CareerStats class)
         /// </summary>
         public void ResetSession()
         {
@@ -78,22 +77,13 @@ namespace MarioGame.src._Core
             TotalTime = 0f;
             CurrentLevel = 1;
             MaxLevelReached = 1;
+            TotalCoinsThisGame = 0;
+            TotalEnemiesThisGame = 0;
 
-            // DO NOT reset TotalCoins and TotalEnemiesDefeated - they are permanent!
+            // ? KHÔNG reset career stats - chúng managed b?i CareerStats class
+            // ? KHÔNG load t? file - ch? reset memory variables
 
-            SaveSession();
-            System.Diagnostics.Debug.WriteLine("[SESSION] Reset - Session stats cleared, Permanent stats preserved");
-        }
-
-        /// <summary>
-        /// Reset PERMANENT stats (only use for testing or special cases)
-        /// </summary>
-        public void ResetPermanentStats()
-        {
-            TotalCoins = 0;
-            TotalEnemiesDefeated = 0;
-            SaveSession();
-            System.Diagnostics.Debug.WriteLine("[SESSION] Permanent stats cleared");
+            System.Diagnostics.Debug.WriteLine($"[SESSION] Reset - Session stats cleared");
         }
 
         public void SetCurrentLevel(int level)
@@ -101,6 +91,21 @@ namespace MarioGame.src._Core
             CurrentLevel = level;
             if (level > MaxLevelReached)
                 MaxLevelReached = level;
+        }
+
+        /// <summary>
+        /// Compatibility properties for old code
+        /// </summary>
+        public int TotalCoins 
+        { 
+            get => TotalCoinsThisGame;
+            set => TotalCoinsThisGame = value;
+        }
+        
+        public int TotalEnemiesDefeated 
+        { 
+            get => TotalEnemiesThisGame;
+            set => TotalEnemiesThisGame = value;
         }
 
         private void SaveSession()
@@ -113,14 +118,13 @@ namespace MarioGame.src._Core
 
                 var data = new 
                 { 
-                    // Session stats
+                    // Session stats ONLY
                     TotalScore, 
                     TotalTime, 
                     CurrentLevel, 
                     MaxLevelReached,
-                    // Permanent stats
-                    TotalCoins, 
-                    TotalEnemiesDefeated
+                    TotalCoinsThisGame,
+                    TotalEnemiesThisGame
                 };
                 var json = System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                 System.IO.File.WriteAllText(SESSION_FILE, json);
@@ -142,16 +146,20 @@ namespace MarioGame.src._Core
                     var data = System.Text.Json.JsonDocument.Parse(json).RootElement;
 
                     // Load session stats
-                    TotalScore = data.GetProperty("TotalScore").GetInt32();
-                    TotalTime = data.GetProperty("TotalTime").GetSingle();
-                    CurrentLevel = data.GetProperty("CurrentLevel").GetInt32();
-                    MaxLevelReached = data.GetProperty("MaxLevelReached").GetInt32();
+                    if (data.TryGetProperty("TotalScore", out var scoreElement))
+                        TotalScore = scoreElement.GetInt32();
+                    if (data.TryGetProperty("TotalTime", out var timeElement))
+                        TotalTime = timeElement.GetSingle();
+                    if (data.TryGetProperty("CurrentLevel", out var levelElement))
+                        CurrentLevel = levelElement.GetInt32();
+                    if (data.TryGetProperty("MaxLevelReached", out var maxLevelElement))
+                        MaxLevelReached = maxLevelElement.GetInt32();
+                    if (data.TryGetProperty("TotalCoinsThisGame", out var coinsElement))
+                        TotalCoinsThisGame = coinsElement.GetInt32();
+                    if (data.TryGetProperty("TotalEnemiesThisGame", out var enemiesElement))
+                        TotalEnemiesThisGame = enemiesElement.GetInt32();
 
-                    // Load permanent stats
-                    TotalCoins = data.GetProperty("TotalCoins").GetInt32();
-                    TotalEnemiesDefeated = data.GetProperty("TotalEnemiesDefeated").GetInt32();
-
-                    System.Diagnostics.Debug.WriteLine($"[SESSION] Loaded - Score: {TotalScore}, Coins: {TotalCoins}, Enemies: {TotalEnemiesDefeated}");
+                    System.Diagnostics.Debug.WriteLine($"[SESSION] Loaded - Score: {TotalScore}");
                 }
             }
             catch (System.Exception ex)
