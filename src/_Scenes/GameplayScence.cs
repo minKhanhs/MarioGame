@@ -285,6 +285,18 @@ namespace MarioGame._Scenes
             if (_isLevelFinished)
             {
                 _finishTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                // 1. Cập nhật Session
+                GameSession.Instance.AddLevelStats(_hud.CurrentScore, _hud.CoinsCollected, _hud.EnemiesDefeated, 0);
+
+                // 2. LƯU VÀO SLOT (Quan trọng)
+                SaveSlotManager.UpdateCurrentSlot(
+                    _levelIndex + 1, // Mở màn tiếp theo
+                    GameSession.Instance.TotalScore, // Điểm hiện tại
+                    _player.Lives,
+                    GameSession.Instance.TotalCoins,
+                    GameSession.Instance.TotalEnemiesDefeated,
+                    GameSession.Instance.TotalTime
+                );
                 if (_finishTimer > 2.0f)
                 {
                     _isContentLoaded = false;

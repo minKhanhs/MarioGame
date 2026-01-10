@@ -1,5 +1,6 @@
 ﻿using MarioGame._Scenes;
 using MarioGame.src._Core;
+using MarioGame.src._Data;
 using MarioGame.src._Scenes;
 using MarioGame.src._UI;
 using Microsoft.Xna.Framework;
@@ -200,17 +201,14 @@ namespace MarioGame.src._Scenes
             // Handle button clicks
             if (_buttons[0].WasPressed) // 1 PLAYER
             {
-                GameManager.Instance.GameMode = 1;
-                GameSession.Instance.ResetSession(); // Reset session for new game
-                GameManager.Instance.ClearSavedGameState();
-                GameManager.Instance.ChangeScene(new GameplayScene(1));
+                SaveSlotManager.LoadSlots();
+                GameManager.Instance.ChangeScene(new SaveSlotScene(false));
             }
             else if (_buttons[1].WasPressed) // 2 PLAYERS
             {
                 GameManager.Instance.GameMode = 2;
-                GameSession.Instance.ResetSession(); // Reset session for new game
-                GameManager.Instance.ClearSavedGameState();
-                GameManager.Instance.ChangeScene(new TwoPlayerGameplayScene(1));
+                // Truyền true vì là 2 người
+                GameManager.Instance.ChangeScene(new SaveSlotScene(true));
             }
             else if (_buttons[2].WasPressed) // SETTINGS
             {

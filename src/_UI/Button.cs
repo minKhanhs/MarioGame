@@ -17,6 +17,7 @@ namespace MarioGame.src._UI
         public float TextScale { get; set; } = 1.0f; // Add text scale property
         public bool IsHovered { get; set; }
         public bool WasPressed { get; set; }
+        public object Tag { get; set; }
 
         private MouseState _previousMouseState;
         private const int BorderWidth = 4;
